@@ -39,6 +39,11 @@ struct FNV164_CTX * FNV164_CTX_create (void)
    return self;
 }
 
+void FNV164_CTX_delete (struct FNV164_CTX * self)
+{
+   free (self);
+}
+
 /* {{{ FNV164Init
  * 64-bit FNV-1 hash initialisation
  */
@@ -51,13 +56,7 @@ void FNV164Init(FNV164_CTX *context)
 void FNV164Update(FNV164_CTX *context, const unsigned char *input,
 		unsigned int inputLen)
 {
-	context->state = fnv_64_buf((void *)input, inputLen, context->state, 0);
-}
-
-void FNV1a64Update(FNV164_CTX *context, const unsigned char *input,
-		unsigned int inputLen)
-{
-	context->state = fnv_64_buf((void *)input, inputLen, context->state, 1);
+	context->state = fnv_64_buf((void *)input, inputLen, context->state);
 }
 
 void FNV164Final(unsigned char digest[8], FNV164_CTX * context)
@@ -81,13 +80,12 @@ void FNV164Final(unsigned char digest[8], FNV164_CTX * context)
  *  buf - start of buffer to hash
  *  len - length of buffer in octets
  *  hval	- previous hash value or 0 if first call
- *  alternate - if > 0 use the alternate version
  *
  * returns:
  *  64 bit hash as a static hash type
  */
 static uint64_t
-fnv_64_buf(void *buf, size_t len, uint64_t hval, int alternate)
+fnv_64_buf(void *buf, size_t len, uint64_t hval)
 {
 	unsigned char *bp = (unsigned char *)buf;   /* start of buffer */
 	unsigned char *be = bp + len;	   /* beyond end of buffer */
@@ -97,19 +95,12 @@ fnv_64_buf(void *buf, size_t len, uint64_t hval, int alternate)
 	 */
 	while (bp < be) {
 
-		if (alternate == 0) {
-			/* multiply by the 64 bit FNV magic prime mod 2^64 */
-			hval *= FNV_64_PRIME;
+		/* multiply by the 64 bit FNV magic prime mod 2^64 */
+		hval *= FNV_64_PRIME;
 
-			/* xor the bottom with the current octet */
-			hval ^= (uint64_t)*bp++;
-		 } else {
-			/* xor the bottom with the current octet */
-			hval ^= (uint64_t)*bp++;
-
-			/* multiply by the 64 bit FNV magic prime mod 2^64 */
-			hval *= FNV_64_PRIME;
-		 }
+		/* xor the bottom with the current octet */
+		hval ^= (uint64_t)*bp++;
+		 
 	}
 
 	/* return our new hash value */

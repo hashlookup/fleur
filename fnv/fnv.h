@@ -12,9 +12,9 @@ typedef struct FNV164_CTX {
 
 void FNV164Init(FNV164_CTX *context);
 void FNV164Update(FNV164_CTX *context, const unsigned char *input, unsigned int inputLen);
-void FNV1a64Update(FNV164_CTX *context, const unsigned char *input, unsigned int inputLen);
 void FNV164Final(unsigned char digest[16], FNV164_CTX * context);
 
 struct FNV164_CTX * FNV164_CTX_create (void);
+void FNV164_CTX_delete (FNV164_CTX * context);
 
-static uint64_t fnv_64_buf(void *buf, size_t len, uint64_t hval, int alternate);
+static uint64_t fnv_64_buf(void *buf, size_t len, uint64_t hval);

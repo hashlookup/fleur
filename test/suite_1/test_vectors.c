@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <fnv.h>
 
+
+// Some global var for fnv test
+FNV164_CTX* context;
+
 void test_fnv(void)
 {
-    FNV164_CTX* context = FNV164_CTX_create();
 
     unsigned char digest[8];
     FNV164Init(context);
@@ -28,9 +31,13 @@ void test_fnv(void)
     TEST_ASSERT_EQUAL_STRING("bc06a2bbebfbdd53", output);
 }
 
-void setUp() { }
+void setUp() {
+    context = FNV164_CTX_create();
+ }
 
-void tearDown() { }
+void tearDown() {
+    FNV164_CTX_delete(context);
+ }
 
 int main(void)
 {
