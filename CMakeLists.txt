@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 set(TARGET_GROUP production CACHE STRING "Group to build")
 
 add_subdirectory(fnv)
+add_subdirectory(bloom)
 
 if(TARGET_GROUP STREQUAL production)
     add_subdirectory(main)

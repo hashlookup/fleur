@@ -65,6 +65,7 @@ CTestTestfile.cmake
 _deps
 build/*
 test/suite_1/suite_1_app
+test/suite_2/suite_2_app
 
 # ninja craps
 .ninja_deps
