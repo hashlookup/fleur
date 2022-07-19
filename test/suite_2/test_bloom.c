@@ -51,8 +51,42 @@ void test_reading_full(void)
 }
 
 void test_fingerprint(void){
-    // uint64_t = Fingerprint();
-    // TEST_FAIL_MESSAGE("FAILURE ATM");
+    char str[80];
+    BloomFilter * filter = Initialize(100000, 0.01);
+    uint64_t* fp = calloc(7, sizeof(uint64_t));
+	uint64_t expected[7] = {20311, 36825, 412501, 835777, 658914, 853361, 307361};
+	Fingerprint("bar", strlen("bar"), &fp, filter);
+    for (uint64_t i = 0; i < filter->k ; i++ ){
+		if (fp[i] != expected[i]) {
+            sprintf(str, "Wrong fingerprint: %ld vs. %ld", fp[i], expected[i]);
+		    TEST_FAIL_MESSAGE(str);
+			break;
+		}
+	}
+}
+
+void test_initialize(void){
+    BloomFilter *bf = Initialize(10000, 0.001);
+    char str[80];
+    print_filter(bf);
+	if (bf->k != 10) {
+		TEST_FAIL_MESSAGE("k does not match expectation!\n");
+        (strerror(errno));
+	}
+	if (bf->m != 143775 ){
+        sprintf(str, "m does not match expectation: %lu\n", bf->m);
+		TEST_FAIL_MESSAGE(str);
+	}
+	if (bf->M != (uint64_t)ceil((double)bf->m/64)){
+        sprintf(str, "M does not match expectation: %lu\n", bf->M);
+		TEST_FAIL_MESSAGE(str);
+	}
+	for (uint64_t i = 0 ; i < bf->M; i++) {
+		if (bf->v[i] != 0) {
+			TEST_FAIL_MESSAGE("Filter value is not initialized to zero!\n");
+		}
+	}
+
 }
 
 void setUp() {
@@ -77,7 +111,8 @@ int main(void)
 
     RUN_TEST(test_reading_header);
     RUN_TEST(test_reading_full);
-    // RUN_TEST(test_fingerprint);
+    RUN_TEST(test_initialize);
+    RUN_TEST(test_fingerprint);
 
     return UNITY_END();
 }

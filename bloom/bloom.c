@@ -47,9 +47,30 @@ struct BloomFilter * BloomFilterFromFile(struct header * h, FILE* f){
 
 // Fingerprint returns the fingerprint of a given value, as an array of index
 // values.
-uint64_t * Fingerprint(uint64_t value[], uint64_t fingerprint[], BloomFilter * filter) {
-    fingerprint = calloc(filter->k, sizeof(uint64_t));
-  
+void Fingerprint(char *buf, size_t buf_size,  uint64_t **fingerprint, BloomFilter * filter) {
+    uint64_t* tmp = calloc(filter->k, sizeof(uint64_t));
+    uint64_t h = fnv1(buf, buf_size);
+    uint64_t hn = h % m;
+    for (uint64_t i = 0; i < filter->k; i++){
+		hn = (hn * g) % m;
+		tmp[i] = (uint64_t)hn % filter->m;
+    }
+
+    free(*fingerprint);
+    *fingerprint = tmp;
+}
+
+// Initialize returns a new, empty Bloom filter with the given capacity (n)
+// and FP probability (p).
+struct BloomFilter * Initialize(uint64_t n, double p){
+    static struct BloomFilter bf;
+	bf.m = abs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
+	bf.n = n;
+	bf.p = p;
+	bf.M = ceil(bf.m / 64.0);
+	bf.k = ceil(log(2) * bf.m / bf.n );
+    bf.v = calloc(bf.M, sizeof(uint64_t));
+	return &bf;
 }
 
 void print_header(header h){

@@ -38,8 +38,9 @@ typedef struct header{
 static const uint64_t m = 18446744073709551557LLU;
 static const uint64_t g = 18446744073709550147LLU;
 
+struct BloomFilter * Initialize(uint64_t n, double p);
 struct BloomFilter * BloomFilterFromFile(header * h, FILE* f);
 struct BloomFilter * Read();
-uint64_t * Fingerprint(uint64_t value[], uint64_t fingerprint[], BloomFilter * filter);
+void Fingerprint(char *buf, size_t buf_size, uint64_t **fingerprint, BloomFilter * filter);
 void print_header(header h);
 void print_filter(BloomFilter * b);
