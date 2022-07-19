@@ -1,9 +1,6 @@
 #include <stdint.h>
 
-struct BloomFilter {
-	//bit array - dynamic
-    uint64_t *v;
-
+typedef struct BloomFilter {
 	//desired maximum number of elements
     uint64_t n;
 
@@ -22,9 +19,12 @@ struct BloomFilter {
 	//number of 64-bit integers (generated automatically)
     uint64_t M;
 
+	//bit array - dynamic
+    uint64_t *v;
+
 	//arbitrary data that we can attach to the filter - dynamic
 	unsigned char *Data;
-};
+}BloomFilter;
 
 typedef struct header{
     uint64_t version;
@@ -35,5 +35,7 @@ typedef struct header{
     uint64_t N;
 }header;
 
+struct BloomFilter * BloomFilterFromFile(header * h, FILE* f);
 struct BloomFilter * Read();
 void print_header(header h);
+void print_filter(BloomFilter * b);
