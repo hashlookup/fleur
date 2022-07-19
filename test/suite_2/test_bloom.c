@@ -4,11 +4,38 @@
 #include <string.h>
 #include <errno.h>
 #include <bloom.h>
+#include <time.h>
 // Some global file descriptor
 FILE* inheader;
 FILE* infull;
 struct header my_header;
 
+typedef struct tester {
+    BloomFilter *bf;
+    char *buf[];
+}tester;
+
+char* GenerateTestValue(uint64_t length){
+    char* buf = calloc(length, sizeof(char));
+    time_t t;
+   srand((unsigned) time(&t));
+    for (uint64_t i = 0; i < length; i++){
+		buf[i] = rand() % 256;
+    }
+
+	return buf;
+}
+
+tester * GenerateExampleFilter(uint64_t capacity, double p, uint64_t samples) {
+    struct tester *test = malloc(sizeof(struct tester) + samples);
+    test->bf = Initialize(capacity, p);
+	test->bf->Data = "foobar";
+	for (uint64_t i = 0; i < samples; i++) {
+        test->buf[i] = GenerateTestValue(100);
+        Add(test->buf[i], 100, test->bf);
+	}
+	return test;
+}
 
 void test_reading_header(void)
 {
@@ -89,6 +116,23 @@ void test_initialize(void){
 
 }
 
+//This tests the checking of values against a given filter
+void test_checking(void) {
+	uint64_t capacity = 100000;
+	double p = 0.001;
+	uint64_t samples = 100000;
+    struct tester *test = GenerateExampleFilter(capacity, p, samples);
+    uint64_t* fp = calloc(test->bf->k, sizeof(uint64_t));
+
+    for (uint64_t i = 0; i < samples; i ++){
+	    // Fingerprint(test->buf[i], 100, &fp, test->bf);
+        if (CheckFingerprint(test->buf[i], test->bf) == 0) {
+            TEST_FAIL_MESSAGE("Did not find test value in filter!");
+		}
+    }
+    print_filter(test->bf);
+}
+
 void setUp() {
     inheader = fopen("header.bin", "rb");
     if (inheader==NULL){
@@ -113,6 +157,7 @@ int main(void)
     RUN_TEST(test_reading_full);
     RUN_TEST(test_initialize);
     RUN_TEST(test_fingerprint);
+    RUN_TEST(test_checking);
 
     return UNITY_END();
 }

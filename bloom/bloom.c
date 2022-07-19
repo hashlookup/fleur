@@ -60,6 +60,49 @@ void Fingerprint(char *buf, size_t buf_size,  uint64_t **fingerprint, BloomFilte
     *fingerprint = tmp;
 }
 
+// Add adds a byte array element to the Bloom filter.
+void Add(char *buf, size_t buf_size, BloomFilter * filter) {
+    uint64_t k, l;
+	int newValue = 0; 
+    uint64_t* fp = calloc(filter->k, sizeof(uint64_t));
+	Fingerprint(buf, buf_size, &fp, filter);
+	for (uint64_t i = 0; i < filter->k; i++) {
+        k = buf[i] / 64;
+        l = buf[i] % 64;
+        uint64_t v = 1 << l;
+		if ((filter->v[k] & v) == 0) {
+			newValue = 1;
+		}
+        filter->v[k] |= v;
+	}
+	if (newValue == 1) {
+		filter->N++;
+	}
+}
+
+// Check returns true if the given value may be in the Bloom filter, false if it
+// is definitely not in it.
+int Check(char *buf, size_t buf_size, BloomFilter * filter) {
+    uint64_t* fp = calloc(filter->k, sizeof(uint64_t));
+	Fingerprint(buf, buf_size, &fp, filter);
+	return CheckFingerprint(buf, filter);
+}
+
+// CheckFingerprint returns 1 if the given fingerprint occurs in the Bloom
+// filter, 0 if it does not.
+int CheckFingerprint(char *buf, BloomFilter *filter) {
+    uint64_t k, l;
+    for (uint64_t i = 0; i < filter->k; i++){
+        k = buf[i] / 64;
+        l = buf[i] % 64;
+        if (filter->v[k] & (1 << l) == 0){
+            return 0;
+        }
+    }
+	return 1;
+}
+
+
 // Initialize returns a new, empty Bloom filter with the given capacity (n)
 // and FP probability (p).
 struct BloomFilter * Initialize(uint64_t n, double p){
