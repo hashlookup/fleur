@@ -9,6 +9,7 @@ FILE* inheader;
 FILE* infull;
 struct header my_header;
 
+
 void test_reading_header(void)
 {
     size_t elements_read = fread(&my_header, sizeof(my_header), 1, inheader);
@@ -49,6 +50,11 @@ void test_reading_full(void)
     print_filter(my_bloom);
 }
 
+void test_fingerprint(void){
+    // uint64_t = Fingerprint();
+    // TEST_FAIL_MESSAGE("FAILURE ATM");
+}
+
 void setUp() {
     inheader = fopen("header.bin", "rb");
     if (inheader==NULL){
@@ -71,6 +77,7 @@ int main(void)
 
     RUN_TEST(test_reading_header);
     RUN_TEST(test_reading_full);
+    // RUN_TEST(test_fingerprint);
 
     return UNITY_END();
 }

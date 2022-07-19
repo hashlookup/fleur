@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <fnv.h>
 #include "bloom.h"
 
+
+// BloomFilterFromFile return a pointer to a BloomFilter from a 
+// bloom filter header and a file descriptor.
 struct BloomFilter * BloomFilterFromFile(struct header * h, FILE* f){
     static struct BloomFilter my_bloom;
     my_bloom.n = h->n;
@@ -41,6 +45,12 @@ struct BloomFilter * BloomFilterFromFile(struct header * h, FILE* f){
     return &my_bloom;
 }
 
+// Fingerprint returns the fingerprint of a given value, as an array of index
+// values.
+uint64_t * Fingerprint(uint64_t value[], uint64_t fingerprint[], BloomFilter * filter) {
+    fingerprint = calloc(filter->k, sizeof(uint64_t));
+  
+}
 
 void print_header(header h){
      printf("Header details:\n version: %lu\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n",
