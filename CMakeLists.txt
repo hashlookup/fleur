@@ -5,11 +5,11 @@ set(TARGET_GROUP production CACHE STRING "Group to build")
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 add_subdirectory(fnv)
-add_subdirectory(bloom)
+add_subdirectory(fleur)
 add_subdirectory(myutils)
 
 if(TARGET_GROUP STREQUAL production)
-    add_subdirectory(main)
+    add_subdirectory(fleurcli)
 elseif(TARGET_GROUP STREQUAL test)
     include(CTest)
 

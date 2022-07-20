@@ -7,7 +7,7 @@
 
 void usage(void)
 {
-    printf("hashlookup-yara [-h] -b bloomfilter \n\n");
+    printf("fleurcli [-h] -b bloomfilter \n\n");
     printf("Does not do much for now.\n"); 
 }
 

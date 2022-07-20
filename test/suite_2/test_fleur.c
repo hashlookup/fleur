@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <bloom.h>
+#include <fleur.h>
 #include <time.h>
 // Some global file descriptor
 FILE* inheader;

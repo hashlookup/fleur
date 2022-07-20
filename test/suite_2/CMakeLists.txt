@@ -1,10 +1,10 @@
 add_executable(suite_2_app
-test_bloom.c
+test_fleur.c
 )
 
 target_link_libraries(suite_2_app
 fnv
-bloom
+fleur
 Unity
 )
 

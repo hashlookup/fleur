@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <fnv.h>
 #include <myutils.h>
-#include "bloom.h"
+#include "fleur.h"
 
 
 // BloomFilterFromFile return a pointer to a BloomFilter from a 
