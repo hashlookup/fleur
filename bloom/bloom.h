@@ -40,7 +40,6 @@ static const uint64_t g = 18446744073709550147LLU;
 
 void Add(char *buf, size_t buf_size, BloomFilter * filter);
 int Check(char *buf, size_t buf_size, BloomFilter * filter);
-int CheckFingerprint(char *buf, BloomFilter *filter);
 struct BloomFilter * Initialize(uint64_t n, double p);
 struct BloomFilter * BloomFilterFromFile(header * h, FILE* f);
 struct BloomFilter * Read();

@@ -2,9 +2,11 @@ project("hashlookup-yara" C)
 cmake_minimum_required(VERSION 3.16)
 
 set(TARGET_GROUP production CACHE STRING "Group to build")
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 add_subdirectory(fnv)
 add_subdirectory(bloom)
+add_subdirectory(myutils)
 
 if(TARGET_GROUP STREQUAL production)
     add_subdirectory(main)

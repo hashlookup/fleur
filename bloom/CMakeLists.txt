@@ -4,6 +4,7 @@ add_library(bloom STATIC
 
 target_link_libraries(bloom
 fnv
+myutils
 m)
 
 target_include_directories(bloom PUBLIC
