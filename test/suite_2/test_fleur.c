@@ -32,8 +32,7 @@ tester * GenerateExampleFilter(uint64_t capacity, double p, uint64_t samples) {
     test->bf = bf;
     unsigned char* str = "foobar";
 	test->bf->Data = str; 
-    // we remove the nullbyte
-    test->bf->datasize = strlen(str) - 1;
+    test->bf->datasize = strlen(str);
 	for (uint64_t i = 0; i < samples; i++) {
         test->buf[i] = GenerateTestValue(100);
         Add(test->buf[i], 100, test->bf);
@@ -181,6 +180,7 @@ int main(void)
     RUN_TEST(test_initialize);
     RUN_TEST(test_fingerprint);
     RUN_TEST(test_checking);
+    // TODO make complete serialization test
     // RUN_TEST(test_writing);
 
     return UNITY_END();

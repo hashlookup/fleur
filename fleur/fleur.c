@@ -15,8 +15,8 @@ void BloomFilterToFile(BloomFilter * bf, FILE* of){
     fwrite(&bf->k, sizeof(uint64_t), 1, of);
     fwrite(&bf->m, sizeof(uint64_t), 1, of);
     fwrite(&bf->N, sizeof(uint64_t), 1, of);
-    fwrite(&bf->v, bf->M * sizeof(uint64_t), 1, of);
-    fwrite(&bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
+    fwrite(bf->v, bf->M * sizeof(uint64_t), 1, of);
+    fwrite(bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
 }
 
 // BloomFilterFromFile return a pointer to a BloomFilter from a 

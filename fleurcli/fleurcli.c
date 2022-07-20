@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <fleur.h>
+#include <myutils.h>
 
 
 struct BloomFilter * bf;
@@ -60,48 +61,58 @@ int main(int argc, char* argv[])
     // fprintf(stderr, "[INFO] bloom filter path = %s\n", bloom_path);
 
     FILE* in = fopen(bloom_path, "rb");
+    if (in == NULL) {
+        fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+        return EXIT_FAILURE;
+    }
     size_t elements_read = fread(&bfh, sizeof(bfh), 1, in);
     if(elements_read == 0){
         fprintf(stderr, "[ERROR] %s", strerror(errno)); 
     }
 
     bf = BloomFilterFromFile(&bfh, in);
+    fclose(in);
 
     if (show == 1){
         print_filter(bf);
+        free(bf->v);
+        free(bloom_path);
         return EXIT_SUCCESS;
     }
 
     if (add == 1){
         Add(to_add, strlen(to_add), bf);
-        if (Check("checking value", strlen("checking value"), bf) == 1){
-            printf("oui\n");
-        }else{
-            printf("non\n");
+        // Save to bloom filter file
+        FILE* f = fopen(bloom_path, "wb");
+        if (f == NULL) {
+            fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+            return EXIT_FAILURE;
         }
-        print_filter(bf);
+        BloomFilterToFile(bf, f);
+        fclose(f);
+        free(bf->v);
+        free(bloom_path);
+        free(to_add);
         return EXIT_SUCCESS;
     }
 
     // Checking values from stdin
     if (check == 1){
-        printf("%s", to_check);
         if (Check(to_check, strlen(to_check), bf) == 1){
-            printf("oui\n");
-        }else{
-            printf("non\n");
+            printf("%s\n", to_check);
         }
 
+        // TODO stdin
         // char c[80] = { 0 };
         // while(fgets(c, sizeof(c), stdin) != NULL)
         // {
         //     if (Check(c, 80, bf) == 1) {
-        //         printf("oui");
-        //         // printf("%s\n", c);
+        //         printf("%s\n", c);
         //     }
         // }
+        free(bf->v);
+        free(bloom_path);
+        free(to_check);
+        return EXIT_SUCCESS;
     }
-
-    fclose(in);
-    return EXIT_SUCCESS;
 }
