@@ -1,8 +1,8 @@
-add_executable(main
+add_executable(fleurcli
 fleurcli.c
 )
 
-target_link_libraries(main
+target_link_libraries(fleurcli
 fnv
 fleur
 )

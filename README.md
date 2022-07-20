@@ -8,13 +8,11 @@ Fleur implements a Bloom Filter library that is fully compatible with DSCO's [Go
 
 Fleur has only been tested under Ubuntu 20.04
 
-# Installation
-
 # Compilation
 ```
 git clone git@github.com:hashlookup/fleur.git
 git submodule update --init --recursive
-cmake -GNinja -DTARGET_GROUP=test . 
+cmake -GNinja -DTARGET_GROUP=production . 
 ninja -v
 ```
 

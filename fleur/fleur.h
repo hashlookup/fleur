@@ -1,6 +1,11 @@
 #include <stdint.h>
 
 typedef struct BloomFilter {
+    // version, needed for serialization 
+    uint64_t version;
+    // datasize, needed for serialization 
+    uint64_t datasize;
+
 	//desired maximum number of elements
     uint64_t n;
 
@@ -24,6 +29,7 @@ typedef struct BloomFilter {
 
 	//arbitrary data that we can attach to the filter - dynamic
 	unsigned char *Data;
+
 }BloomFilter;
 
 typedef struct header{
@@ -42,6 +48,7 @@ void Add(char *buf, size_t buf_size, BloomFilter * filter);
 int Check(char *buf, size_t buf_size, BloomFilter * filter);
 struct BloomFilter * Initialize(uint64_t n, double p);
 struct BloomFilter * BloomFilterFromFile(header * h, FILE* f);
+void BloomFilterToFile(BloomFilter * bf, FILE* of);
 struct BloomFilter * Read();
 void Fingerprint(char *buf, size_t buf_size, uint64_t **fingerprint, BloomFilter * filter);
 void print_header(header h);

@@ -5,6 +5,19 @@
 #include <myutils.h>
 #include "fleur.h"
 
+// BloomFilterToFile serializes a bloom filter to a file
+// it receives a file descriptor
+void BloomFilterToFile(BloomFilter * bf, FILE* of){
+    bf->version = (uint64_t) 1;
+    fwrite(&bf->version, sizeof(uint64_t), 1, of);
+    fwrite(&bf->n, sizeof(uint64_t), 1, of);
+    fwrite(&bf->p, sizeof(double), 1, of);
+    fwrite(&bf->k, sizeof(uint64_t), 1, of);
+    fwrite(&bf->m, sizeof(uint64_t), 1, of);
+    fwrite(&bf->N, sizeof(uint64_t), 1, of);
+    fwrite(&bf->v, bf->M * sizeof(uint64_t), 1, of);
+    fwrite(&bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
+}
 
 // BloomFilterFromFile return a pointer to a BloomFilter from a 
 // bloom filter header and a file descriptor.
@@ -84,7 +97,7 @@ void Add(char *buf, size_t buf_size, BloomFilter * filter) {
     free(fp);
 }
 
-// Check returns true if the given value may be in the Bloom filter, false if it
+// Check returns 1 if the given value may be in the Bloom filter, 0 if it
 // is definitely not in it.
 int Check(char *buf, size_t buf_size, BloomFilter * filter) {
     uint64_t k, l;

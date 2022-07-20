@@ -30,7 +30,10 @@ tester * GenerateExampleFilter(uint64_t capacity, double p, uint64_t samples) {
     BloomFilter * bf = Initialize(capacity, p);
     struct tester *test = malloc(sizeof(BloomFilter*) + (samples * sizeof(char*)));
     test->bf = bf;
-	test->bf->Data = "foobar";
+    unsigned char* str = "foobar";
+	test->bf->Data = str; 
+    // we remove the nullbyte
+    test->bf->datasize = strlen(str) - 1;
 	for (uint64_t i = 0; i < samples; i++) {
         test->buf[i] = GenerateTestValue(100);
         Add(test->buf[i], 100, test->bf);
@@ -78,6 +81,14 @@ void test_reading_full(void)
     print_filter(my_bloom);
     free(my_bloom->v);
     free(my_bloom->Data);
+}
+
+void test_writing(void){
+    const char* path = "./writing-test.bloom";
+    FILE* f = fopen(path, "wb");
+    struct tester *test = GenerateExampleFilter(1000, 0.001, 1000);
+    BloomFilterToFile(test->bf, f);
+    fclose(f);
 }
 
 void test_fingerprint(void){
@@ -134,6 +145,10 @@ void test_checking(void) {
             TEST_FAIL_MESSAGE("Did not find test value in filter!");
 		}
     }
+    char* str = "this is not in the filter";
+    if (Check(str, strlen(str), test->bf) == 1) {
+        TEST_FAIL_MESSAGE("This value is not in the filter!");
+    }
     free(test->bf->v);
     for (int i = 0; i < samples; i++){
         free(test->buf[i]);
@@ -166,6 +181,7 @@ int main(void)
     RUN_TEST(test_initialize);
     RUN_TEST(test_fingerprint);
     RUN_TEST(test_checking);
+    // RUN_TEST(test_writing);
 
     return UNITY_END();
 }
