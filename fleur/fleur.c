@@ -85,7 +85,7 @@ void Add(char *buf, size_t buf_size, BloomFilter * filter) {
 	for (uint64_t i = 0; i < filter->k; i++) {
         k = fp[i] / 64;
         l = fp[i] % 64;
-        uint64_t v = 1 << l;
+        uint64_t v = (uint64_t)1 << l;
 		if ((filter->v[k] & v) == 0) {
 			newValue = 1;
 		}
@@ -106,7 +106,7 @@ int Check(char *buf, size_t buf_size, BloomFilter * filter) {
     for (uint64_t i = 0; i < filter->k; i++){
         k = fp[i] / 64;
         l = fp[i] % 64;
-        uint64_t v = 1 << l;
+        uint64_t v = (uint64_t)1 << l;
         if ((filter->v[k] & v) != 0){
             free(fp);
             return 1;
