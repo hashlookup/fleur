@@ -125,13 +125,12 @@ void test_initialize(void){
 void test_checking(void) {
 	uint64_t capacity = 100000;
 	double p = 0.001;
-	uint64_t samples = 100;
+	uint64_t samples = 100000;
     struct tester *test = GenerateExampleFilter(capacity, p, samples);
     print_filter(test->bf);
 
     for (uint64_t i = 0; i < samples; i ++){
         if (Check(test->buf[i], 100, test->bf) == 0) {
-            printf("%s isnot  in the filter!", test->buf[i]);
             TEST_FAIL_MESSAGE("Did not find test value in filter!");
 		}
     }
