@@ -19,7 +19,7 @@ void usage(void)
 
 int main(int argc, char* argv[])
 {
-    int opt, check = 0 , add = 0, show = 0;
+    int opt, check = 0, checkstdin = 0, add = 0, show = 0;
     char* bloom_path;
     char* to_add;
     char* to_check;
@@ -28,15 +28,15 @@ int main(int argc, char* argv[])
     assert(bloom_path);  
 
     // while ((opt = getopt(argc, argv, "b:a:hcs")) != -1) {
-    while ((opt = getopt(argc, argv, "b:a:c:hs")) != -1) {
+    while ((opt = getopt(argc, argv, "a:c:hfs")) != -1) {
         switch (opt) {
-            case 'b':
-                strncpy(bloom_path , optarg, 128);
-                break;
             case 'c':
                 check = 1;
                 to_check = calloc(128,1);
                 strncpy(to_check , optarg, 128);
+                break;
+            case 'f':
+                checkstdin = 1;
                 break;
             case 'a':
                 add = 1;
@@ -53,6 +53,11 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "[ERROR] Invalid command line was specified\n");
         }
     }
+
+    for(; optind < argc; optind++){     
+        strncpy(bloom_path , argv[optind], 128);
+    }
+      
     if (!bloom_path[0]){
         fprintf(stderr,"[ERROR] A path to a DCSO Bloomfilter file must be specified\n");
         return EXIT_FAILURE; 
@@ -96,23 +101,31 @@ int main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    // Checking values from stdin
+    // Checking value as argument
     if (check == 1){
         if (Check(to_check, strlen(to_check), bf) == 1){
             printf("%s\n", to_check);
         }
-
-        // TODO stdin
-        // char c[80] = { 0 };
-        // while(fgets(c, sizeof(c), stdin) != NULL)
-        // {
-        //     if (Check(c, 80, bf) == 1) {
-        //         printf("%s\n", c);
-        //     }
-        // }
         free(bf->v);
         free(bloom_path);
         free(to_check);
+        return EXIT_SUCCESS;
+    }
+
+    // Checking values from stdin
+    if (checkstdin == 1){
+        char *buffer = NULL;
+        size_t bufsize = 64;
+        size_t nread; 
+
+        while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
+            if (Check(buffer, nread-1, bf) == 1){
+                printf("%s", buffer);
+            }
+        }
+        free(buffer);
+        free(bf->v);
+        free(bloom_path);
         return EXIT_SUCCESS;
     }
 }
