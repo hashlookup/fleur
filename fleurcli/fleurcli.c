@@ -43,17 +43,29 @@ void usage(void)
 int main(int argc, char* argv[])
 {
     int opt;
+    int cancelread = 0;
+    double p = 0.01;
+    uint64_t n = 10000;
     char* bloom_path;
     char* mode_str;
     
     bloom_path = calloc(128,1);
     mode_str = calloc(128,1);
 
-    while ((opt = getopt(argc, argv, "m:h")) != -1) {
+    while ((opt = getopt(argc, argv, "m:p:n:h")) != -1) {
         switch (opt) {
             case 'm':
                 strncpy(mode_str, optarg, 128);
+                if (strcmp(optarg, "create\0") == 0 ){
+                    cancelread =1;
+                }
                 break;
+            case 'p':
+                sscanf(optarg, "%lf", &p);
+                continue;
+            case 'n':
+                sscanf(optarg, "%ld", &n);
+                continue;
             case 'h':
                 usage();
                 return EXIT_SUCCESS;
@@ -71,19 +83,20 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE; 
     }
 
-    FILE* in = fopen(bloom_path, "rb");
-    if (in == NULL) {
-        fprintf(stderr, "[ERROR] %s", strerror(errno)); 
-        return EXIT_FAILURE;
-    }
-    size_t elements_read = fread(&bfh, sizeof(bfh), 1, in);
-    if(elements_read == 0){
-        fprintf(stderr, "[ERROR] %s", strerror(errno)); 
-    }
+    if (!cancelread){
+        FILE* in = fopen(bloom_path, "rb");
+        if (in == NULL) {
+            fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+            return EXIT_FAILURE;
+        }
+        size_t elements_read = fread(&bfh, sizeof(bfh), 1, in);
+        if(elements_read == 0){
+            fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+        }
 
-    bf = BloomFilterFromFile(&bfh, in);
-    fclose(in);
-
+        bf = BloomFilterFromFile(&bfh, in);
+        fclose(in);
+    }
     // variables for reading from stdin
     char *buffer = NULL;
     size_t bufsize = 64;
@@ -126,7 +139,16 @@ int main(int argc, char* argv[])
             free(bloom_path);
             return EXIT_SUCCESS;
         case create:
-            printf("create\n");
+            bf = Initialize(n, p);
+            f = fopen(bloom_path, "wb+");
+            if (f == NULL) {
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                return EXIT_FAILURE;
+            }
+            BloomFilterToFile(bf, f);
+            fclose(f);
+            free(bf->v);
+            free(bloom_path);
             return EXIT_SUCCESS;
         case getdata:
             printf("%s", bf->Data);
