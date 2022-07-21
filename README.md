@@ -28,7 +28,7 @@ Each suite test's executable are then located under `./test/suite_n`.
 # Fleur command line tool usage
 
 # Performances
-Querying on 2438 sha1 hashes against ~800MB hashlookup filter, finding for both implementation 2176 known files:
+Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup.circl.lu/) filter, finding for both implementations 2176 known files:
 ```
 /usr/bin/time -v  bash -c "cat test.txt | bloom check ../hashlookup-full.bloom"
 	Command being timed: "bash -c cat test.txt | bloom check ../hashlookup-full.bloom"
