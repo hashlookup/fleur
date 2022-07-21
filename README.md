@@ -2,7 +2,7 @@
 Fleur implements a Bloom Filter library that is fully compatible with DSCO's [Go](https://github.com/DCSO/flor) and [python](https://github.com/DCSO/flor) implementations.
 
 # Requirements
-- gcc
+- gcc version supporting C11
 - [cmake](https://ninja-build.org/)
 - [ninja](https://ninja-build.org/)
 
