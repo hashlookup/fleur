@@ -26,6 +26,24 @@ Each suite test's executable are then located under `./test/suite_n`.
 # LibFleur usage
 
 # Fleur command line tool usage
+```
+NAME:
+   Fleurcli - Utility to work with bloom filters
+
+USAGE:
+   fleurcli [-m] mode [command options] [arguments...] bloomfilter.file
+
+VERSION:
+   0.1
+
+MODES:
+     create         Create a new Bloom filter and store it in the given filename.
+     insert         Inserts new values into an existing Bloom filter.
+     check          Checks values against an existing Bloom filter.
+     set-data       Sets the data associated with the Bloom filter.
+     get-data       Prints the data associated with the Bloom filter.
+     show           Shows various details about a given Bloom filter.
+```
 
 # Performances
 Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup.circl.lu/) filter, finding for both implementations 2176 known files:

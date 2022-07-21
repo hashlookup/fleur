@@ -36,8 +36,23 @@ int keyfromstring(char *key)
 
 void usage(void)
 {
-    printf("fleurcli [-h] -b bloomfilter \n\n");
-    printf("Does not do much for now.\n"); 
+    printf("NAME:\n");
+    printf("   Fleurcli - Utility to work with bloom filters\n");
+    printf("\n");
+    printf("USAGE:\n");
+    printf("   fleurcli [-m] mode [command options] [arguments...] bloomfilter.file\n");
+    printf("\n");
+    printf("VERSION:\n");
+    printf("   0.1\n");
+    printf("\n");
+    printf("MODES:\n");
+    printf("     create         Create a new Bloom filter and store it in the given filename.\n");
+    printf("     insert         Inserts new values into an existing Bloom filter.\n");
+    printf("     check          Checks values against an existing Bloom filter.\n");
+    printf("     set-data       Sets the data associated with the Bloom filter.\n");
+    printf("     get-data       Prints the data associated with the Bloom filter.\n");
+    printf("     show           Shows various details about a given Bloom filter.\n");
+
 }
 
 int main(int argc, char* argv[])
