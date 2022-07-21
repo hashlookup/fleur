@@ -40,12 +40,12 @@ void usage(void)
     printf("   Fleurcli - Utility to work with bloom filters\n");
     printf("\n");
     printf("USAGE:\n");
-    printf("   fleurcli [-m] mode [command options] [arguments...] bloomfilter.file\n");
+    printf("   fleurcli [-c] command [command options] [arguments...] bloomfilter.file\n");
     printf("\n");
     printf("VERSION:\n");
     printf("   0.1\n");
     printf("\n");
-    printf("MODES:\n");
+    printf("COMMANDS:\n");
     printf("     create         Create a new Bloom filter and store it in the given filename.\n");
     printf("     insert         Inserts new values into an existing Bloom filter.\n");
     printf("     check          Checks values against an existing Bloom filter.\n");
@@ -67,9 +67,9 @@ int main(int argc, char* argv[])
     bloom_path = calloc(128,1);
     mode_str = calloc(128,1);
 
-    while ((opt = getopt(argc, argv, "m:p:n:h")) != -1) {
+    while ((opt = getopt(argc, argv, "c:p:n:h")) != -1) {
         switch (opt) {
-            case 'm':
+            case 'c':
                 strncpy(mode_str, optarg, 128);
                 if (strcmp(optarg, "create\0") == 0 ){
                     cancelread =1;

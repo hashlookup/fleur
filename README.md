@@ -31,12 +31,12 @@ NAME:
    Fleurcli - Utility to work with bloom filters
 
 USAGE:
-   fleurcli [-m] mode [command options] [arguments...] bloomfilter.file
+   fleurcli [-c] command [command options] [arguments...] bloomfilter.file
 
 VERSION:
    0.1
 
-MODES:
+COMMANDS:
      create         Create a new Bloom filter and store it in the given filename.
      insert         Inserts new values into an existing Bloom filter.
      check          Checks values against an existing Bloom filter.
@@ -49,6 +49,7 @@ MODES:
 Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup.circl.lu/) filter, finding for both implementations 2176 known files:
 ```
 /usr/bin/time -v  bash -c "cat test.txt | bloom check ../hashlookup-full.bloom"
+...
 	Command being timed: "bash -c cat test.txt | bloom check ../hashlookup-full.bloom"
 	User time (seconds): 1.23
 	System time (seconds): 0.24
@@ -75,22 +76,23 @@ Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup
 ```
 
 ```
-/usr/bin/time -v  bash -c "cat test.txt | ./fleurcli -f ../hashlookup-full.bloom"
-	Command being timed: "bash -c cat test.txt | ./fleurcli -f ../hashlookup-full.bloom"
+/usr/bin/time -v  bash -c "cat test.txt | ./fleurcli -c check ../hashlookup-full.bloom"
+...
+    Command being timed: "bash -c cat test.txt | ./fleurcli -c check ../hashlookup-full.bloom"
 	User time (seconds): 0.00
-	System time (seconds): 0.33
-	Percent of CPU this job got: 96%
+	System time (seconds): 0.34
+	Percent of CPU this job got: 97%
 	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.35
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 830508
+	Maximum resident set size (kbytes): 830580
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
 	Minor (reclaiming a frame) page faults: 207737
 	Voluntary context switches: 16
-	Involuntary context switches: 2
+	Involuntary context switches: 65
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 0
