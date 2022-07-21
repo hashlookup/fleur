@@ -28,7 +28,7 @@ struct BloomFilter * BloomFilterFromFile(struct header * h, FILE* f){
     my_bloom.k = h->k;
     my_bloom.N = h->N;
     my_bloom.m = h->m;
-    my_bloom.M =  ceil(my_bloom.m / 64.0);
+    my_bloom.M = ceil(my_bloom.m / 64.0);
 
     // Get data size
     int err = fseek(f, 0, SEEK_END);
@@ -107,20 +107,20 @@ int Check(char *buf, size_t buf_size, BloomFilter * filter) {
         k = fp[i] / 64;
         l = fp[i] % 64;
         uint64_t v = (uint64_t)1 << l;
-        if ((filter->v[k] & v) != 0){
+        if ((filter->v[k] & v) == 0){
             free(fp);
-            return 1;
+            return 0;
         }
     }
     free(fp);
-	return 0;
+	return 1;
 }
 
 // Initialize returns a new, empty Bloom filter with the given capacity (n)
 // and FP probability (p).
 struct BloomFilter * Initialize(uint64_t n, double p){
     static struct BloomFilter bf;
-	bf.m = abs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
+	bf.m = fabs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
 	bf.n = n;
 	bf.p = p;
 	bf.M = ceil(bf.m / 64.0);
