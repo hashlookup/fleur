@@ -7,9 +7,32 @@
 #include <fleur.h>
 #include <myutils.h>
 
-
 struct BloomFilter * bf;
 struct header bfh;
+
+#define BADKEY (int)(-1)
+#define NKEYS (sizeof(lookuptable)/sizeof(t_symstruct))
+typedef struct { char *key; int val; } t_symstruct;
+enum modes{check, insert, show, create, setdata, getdata};
+static t_symstruct lookuptable[] = {
+    { "check", check },
+    { "insert", insert },
+    { "show", show },
+    { "create", create },
+    { "set-data", setdata },
+    { "get-data", getdata }
+};
+
+int keyfromstring(char *key)
+{
+    int i;
+    for (i=0; i < NKEYS; i++) {
+        t_symstruct *sym = &lookuptable[i];
+        if (strcmp(sym->key, key) == 0)
+            return sym->val;
+    }
+    return BADKEY;
+}
 
 void usage(void)
 {
@@ -19,32 +42,17 @@ void usage(void)
 
 int main(int argc, char* argv[])
 {
-    int opt, check = 0, checkstdin = 0, add = 0, show = 0;
+    int opt;
     char* bloom_path;
-    char* to_add;
-    char* to_check;
+    char* mode_str;
     
     bloom_path = calloc(128,1);
-    assert(bloom_path);  
+    mode_str = calloc(128,1);
 
-    // while ((opt = getopt(argc, argv, "b:a:hcs")) != -1) {
-    while ((opt = getopt(argc, argv, "a:c:hfs")) != -1) {
+    while ((opt = getopt(argc, argv, "m:h")) != -1) {
         switch (opt) {
-            case 'c':
-                check = 1;
-                to_check = calloc(128,1);
-                strncpy(to_check , optarg, 128);
-                break;
-            case 'f':
-                checkstdin = 1;
-                break;
-            case 'a':
-                add = 1;
-                to_add = calloc(128,1);
-                strncpy(to_add , optarg, 128);
-                break;
-            case 's':
-                show = 1;
+            case 'm':
+                strncpy(mode_str, optarg, 128);
                 break;
             case 'h':
                 usage();
@@ -59,11 +67,9 @@ int main(int argc, char* argv[])
     }
       
     if (!bloom_path[0]){
-        fprintf(stderr,"[ERROR] A path to a DCSO Bloomfilter file must be specified\n");
+        fprintf(stderr,"[ERROR] A path must be specified\n");
         return EXIT_FAILURE; 
     }
-
-    // fprintf(stderr, "[INFO] bloom filter path = %s\n", bloom_path);
 
     FILE* in = fopen(bloom_path, "rb");
     if (in == NULL) {
@@ -78,54 +84,85 @@ int main(int argc, char* argv[])
     bf = BloomFilterFromFile(&bfh, in);
     fclose(in);
 
-    if (show == 1){
-        print_filter(bf);
-        free(bf->v);
-        free(bloom_path);
-        return EXIT_SUCCESS;
-    }
+    // variables for reading from stdin
+    char *buffer = NULL;
+    size_t bufsize = 64;
+    size_t nread; 
+    // variable for file manipulation
+    FILE* f;
+    // variable for data manipulation
+    size_t totalnread; 
+    unsigned char* totalread;
 
-    if (add == 1){
-        Add(to_add, strlen(to_add), bf);
-        // Save to bloom filter file
-        FILE* f = fopen(bloom_path, "wb");
-        if (f == NULL) {
-            fprintf(stderr, "[ERROR] %s", strerror(errno)); 
-            return EXIT_FAILURE;
-        }
-        BloomFilterToFile(bf, f);
-        fclose(f);
-        free(bf->v);
-        free(bloom_path);
-        free(to_add);
-        return EXIT_SUCCESS;
-    }
-
-    // Checking value as argument
-    if (check == 1){
-        if (Check(to_check, strlen(to_check), bf) == 1){
-            printf("%s\n", to_check);
-        }
-        free(bf->v);
-        free(bloom_path);
-        free(to_check);
-        return EXIT_SUCCESS;
-    }
-
-    // Checking values from stdin
-    if (checkstdin == 1){
-        char *buffer = NULL;
-        size_t bufsize = 64;
-        size_t nread; 
-
-        while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
-            if (Check(buffer, nread-1, bf) == 1){
-                printf("%s", buffer);
+    switch (keyfromstring(mode_str)) {
+        case check: 
+            while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
+                if (Check(buffer, nread-1, bf) == 1){
+                    printf("%s", buffer);
+                }
             }
-        }
-        free(buffer);
-        free(bf->v);
-        free(bloom_path);
-        return EXIT_SUCCESS;
+            free(buffer);
+            free(bf->v);
+            free(bloom_path);
+            return EXIT_SUCCESS;
+        case insert:
+            while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
+                Add(buffer, nread-1, bf);
+            }
+            // Save to bloom filter file
+            f = fopen(bloom_path, "wb");
+            if (f == NULL) {
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                return EXIT_FAILURE;
+            }
+            BloomFilterToFile(bf, f);
+            fclose(f);
+            free(bf->v);
+            free(bloom_path);
+            return EXIT_SUCCESS;
+        case show:
+            print_filter(bf);
+            free(bf->v);
+            free(bloom_path);
+            return EXIT_SUCCESS;
+        case create:
+            printf("create\n");
+            return EXIT_SUCCESS;
+        case getdata:
+            printf("%s", bf->Data);
+            return EXIT_SUCCESS;
+        case setdata:
+                totalnread = 0;
+                while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
+                    if (totalnread == 0){
+                        totalread = calloc(nread - 1, sizeof(unsigned char));
+                        memcpy(totalread, buffer, nread);
+                    }else{
+                        totalread = realloc(totalread, (totalnread + (nread - 1)));
+                        memcpy(totalread + totalnread, buffer, (nread -1));
+                    }
+                    totalnread += (nread - 1);
+                }
+                if (totalnread != 0){
+                    free(bf->Data);
+                    bf->Data = calloc(totalnread, sizeof(unsigned char));
+                    bf->datasize = totalnread;
+                    memcpy(bf->Data, totalread, totalnread);
+                    f = fopen(bloom_path, "wb");
+                    if (f == NULL) {
+                        fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                        return EXIT_FAILURE;
+                    }
+                    BloomFilterToFile(bf, f);
+                    fclose(f);
+                    free(totalread);
+                    free(bf->v);
+                    free(bf->Data);
+                }
+            free(bloom_path);
+            return EXIT_SUCCESS;
+        case BADKEY:
+            usage();
+            return EXIT_SUCCESS;
     }
 }
