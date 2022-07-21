@@ -1,4 +1,20 @@
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+typedef struct header {
+    uint64_t version;
+	//desired maximum number of elements
+    uint64_t n;
+	//desired false positive probability
+    double p;
+	//number of hash functions
+    uint64_t k;
+	//number of bits
+    uint64_t m;
+	//number of 64-bit integers (generated automatically)
+    uint64_t N;
+} header;
 
 typedef struct BloomFilter {
     // version, needed for serialization 
@@ -6,50 +22,29 @@ typedef struct BloomFilter {
     // datasize, needed for serialization 
     uint64_t datasize;
 
-	//desired maximum number of elements
-    uint64_t n;
+    // bloom filter file header
+    header *h;
 
-	//desired false positive probability
-    double p;
-
-	//number of hash functions
-    uint64_t k;
-
-	//number of bits
-    uint64_t m;
-
-	//number of elements in the filter
-    uint64_t N;
-
-	//number of 64-bit integers (generated automatically)
+    //number of 64-bit integers (generated automatically)
     uint64_t M;
 
-	//bit array - dynamic
+	// bit array - dynamic
     uint64_t *v;
 
-	//arbitrary data that we can attach to the filter - dynamic
+	// arbitrary data that we can attach to the filter - dynamic
 	unsigned char *Data;
 
-}BloomFilter;
-
-typedef struct header{
-    uint64_t version;
-    uint64_t n;
-    double p;
-    uint64_t k;
-    uint64_t m;
-    uint64_t N;
-}header;
+} BloomFilter;
 
 static const uint64_t m = 18446744073709551557LLU;
 static const uint64_t g = 18446744073709550147LLU;
 
-void Add(char *buf, size_t buf_size, BloomFilter * filter);
-int Check(char *buf, size_t buf_size, BloomFilter * filter);
+void Add(BloomFilter * bf, char *buf, size_t buf_size);
+void SetData(BloomFilter * bf, char* buf, size_t buf_size );
+int Check(BloomFilter * bf, char *buf, size_t buf_size);
 struct BloomFilter * Initialize(uint64_t n, double p);
-struct BloomFilter * BloomFilterFromFile(header * h, FILE* f);
+struct BloomFilter * BloomFilterFromFile(FILE* f);
 void BloomFilterToFile(BloomFilter * bf, FILE* of);
-struct BloomFilter * Read();
-void Fingerprint(char *buf, size_t buf_size, uint64_t **fingerprint, BloomFilter * filter);
+void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
 void print_header(header h);
-void print_filter(BloomFilter * b);
+void print_filter(BloomFilter * bf);

@@ -7,8 +7,7 @@
 #include <fleur.h>
 #include <myutils.h>
 
-struct BloomFilter * bf;
-struct header bfh;
+BloomFilter * bf;
 
 #define BADKEY (int)(-1)
 #define NKEYS (sizeof(lookuptable)/sizeof(t_symstruct))
@@ -104,12 +103,8 @@ int main(int argc, char* argv[])
             fprintf(stderr, "[ERROR] %s", strerror(errno)); 
             return EXIT_FAILURE;
         }
-        size_t elements_read = fread(&bfh, sizeof(bfh), 1, in);
-        if(elements_read == 0){
-            fprintf(stderr, "[ERROR] %s", strerror(errno)); 
-        }
 
-        bf = BloomFilterFromFile(&bfh, in);
+        bf = BloomFilterFromFile(in);
         fclose(in);
     }
     // variables for reading from stdin
@@ -125,7 +120,7 @@ int main(int argc, char* argv[])
     switch (keyfromstring(mode_str)) {
         case check: 
             while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
-                if (Check(buffer, nread-1, bf) == 1){
+                if (Check(bf, buffer, nread-1) == 1){
                     printf("%s", buffer);
                 }
             }
@@ -135,7 +130,7 @@ int main(int argc, char* argv[])
             return EXIT_SUCCESS;
         case insert:
             while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
-                Add(buffer, nread-1, bf);
+                Add(bf, buffer, nread-1);
             }
             // Save to bloom filter file
             f = fopen(bloom_path, "wb");
@@ -181,10 +176,7 @@ int main(int argc, char* argv[])
                     totalnread += (nread - 1);
                 }
                 if (totalnread != 0){
-                    free(bf->Data);
-                    bf->Data = calloc(totalnread, sizeof(unsigned char));
-                    bf->datasize = totalnread;
-                    memcpy(bf->Data, totalread, totalnread);
+                    SetData(bf, totalread, totalnread);
                     f = fopen(bloom_path, "wb");
                     if (f == NULL) {
                         fprintf(stderr, "[ERROR] %s", strerror(errno)); 

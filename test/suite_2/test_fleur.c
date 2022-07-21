@@ -35,13 +35,14 @@ tester * GenerateExampleFilter(uint64_t capacity, double p, uint64_t samples) {
     test->bf->datasize = strlen(str);
 	for (uint64_t i = 0; i < samples; i++) {
         test->buf[i] = GenerateTestValue(100);
-        Add(test->buf[i], 100, test->bf);
+        Add(test->bf, test->buf[i], 100);
 	}
 	return test;
 }
 
 void test_reading_header(void)
 {
+    header my_header;
     size_t elements_read = fread(&my_header, sizeof(my_header), 1, inheader);
     if(elements_read == 0){
         TEST_FAIL_MESSAGE(strerror(errno));
@@ -58,28 +59,13 @@ void test_reading_header(void)
 
 void test_reading_full(void)
 {
-    // Get header
-    size_t elements_read = fread(&my_header, sizeof(my_header), 1, infull);
-    if(elements_read == 0){
-        TEST_FAIL_MESSAGE(strerror(errno));
-    }
-
-    TEST_ASSERT_EQUAL_UINT64 (1, my_header.version);
-    TEST_ASSERT_EQUAL_UINT64 (1000, my_header.n);
-    // Jean-Michel Apeupré
-    TEST_ASSERT_EQUAL_FLOAT (0.000001, my_header.p);
-    TEST_ASSERT_EQUAL_UINT64 (20, my_header.k);
-    TEST_ASSERT_EQUAL_UINT64 (28755, my_header.m);
-    TEST_ASSERT_EQUAL_UINT64 (3, my_header.N);
-
-    struct BloomFilter * my_bloom;
-    my_bloom = BloomFilterFromFile(&my_header, infull);
-
-    TEST_ASSERT_EQUAL_UINT64 (450, my_bloom->M);
+    BloomFilter * bf;
+    bf = BloomFilterFromFile(infull);
+    TEST_ASSERT_EQUAL_UINT64(450, bf->M);
     // TEST_ASSERT_EQUAL_STRING("toto\n", my_bloom->Data);
-    print_filter(my_bloom);
-    free(my_bloom->v);
-    free(my_bloom->Data);
+    print_filter(bf);
+    free(bf->v);
+    free(bf->Data);
 }
 
 void test_writing(void){
@@ -92,18 +78,18 @@ void test_writing(void){
 
 void test_fingerprint(void){
     char str[80];
-    BloomFilter * filter = Initialize(100000, 0.01);
+    BloomFilter * bf = Initialize(100000, 0.01);
     uint64_t* fp = calloc(7, sizeof(uint64_t));
 	uint64_t expected[7] = {20311, 36825, 412501, 835777, 658914, 853361, 307361};
-	Fingerprint("bar", strlen("bar"), &fp, filter);
-    for (uint64_t i = 0; i < filter->k ; i++ ){
+	Fingerprint(bf, "bar", strlen("bar"), &fp);
+    for (uint64_t i = 0; i < bf->h->k ; i++ ){
 		if (fp[i] != expected[i]) {
             sprintf(str, "Wrong fingerprint: %ld vs. %ld", fp[i], expected[i]);
 		    TEST_FAIL_MESSAGE(str);
 			break;
 		}
 	}
-    free(filter->v);
+    free(bf->v);
     free(fp);
 }
 
@@ -111,15 +97,15 @@ void test_initialize(void){
     BloomFilter *bf = Initialize(10000, 0.001);
     char str[80];
     print_filter(bf);
-	if (bf->k != 10) {
+	if (bf->h->k != 10) {
 		TEST_FAIL_MESSAGE("k does not match expectation!\n");
         (strerror(errno));
 	}
-	if (bf->m != 143775 ){
-        sprintf(str, "m does not match expectation: %lu\n", bf->m);
+	if (bf->h->m != 143775 ){
+        sprintf(str, "m does not match expectation: %lu\n", bf->h->m);
 		TEST_FAIL_MESSAGE(str);
 	}
-	if (bf->M != (uint64_t)ceil((double)bf->m/64)){
+	if (bf->M != (uint64_t)ceil((double)bf->h->m/64)){
         sprintf(str, "M does not match expectation: %lu\n", bf->M);
 		TEST_FAIL_MESSAGE(str);
 	}
@@ -140,12 +126,12 @@ void test_checking(void) {
     print_filter(test->bf);
 
     for (uint64_t i = 0; i < samples; i ++){
-        if (Check(test->buf[i], 100, test->bf) == 0) {
+        if (Check(test->bf, test->buf[i], 100) == 0) {
             TEST_FAIL_MESSAGE("Did not find test value in filter!");
 		}
     }
     char* str = "this is not in the filter";
-    if (Check(str, strlen(str), test->bf) == 1) {
+    if (Check(test->bf, str, strlen(str)) == 1) {
         TEST_FAIL_MESSAGE("This value is not in the filter!");
     }
     free(test->bf->v);
@@ -181,7 +167,7 @@ int main(void)
     RUN_TEST(test_fingerprint);
     RUN_TEST(test_checking);
     // TODO make complete serialization test
-    // RUN_TEST(test_writing);
+    RUN_TEST(test_writing);
 
     return UNITY_END();
 }

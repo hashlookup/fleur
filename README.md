@@ -24,6 +24,17 @@ ninja -v
 Each suite test's executable are then located under `./test/suite_n`.
 
 # LibFleur usage
+```
+void Add(BloomFilter * bf, char *buf, size_t buf_size);
+void SetData(BloomFilter * bf, char* buf, size_t buf_size );
+int Check(BloomFilter * bf, char *buf, size_t buf_size);
+struct BloomFilter * Initialize(uint64_t n, double p);
+struct BloomFilter * BloomFilterFromFile(FILE* f);
+void BloomFilterToFile(BloomFilter * bf, FILE* of);
+void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
+void print_header(header h);
+void print_filter(BloomFilter * bf);
+```
 
 # Fleur command line tool usage
 ```
