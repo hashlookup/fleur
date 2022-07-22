@@ -1,5 +1,5 @@
 # Fleur - A bloom filter implementation in C
-Fleur implements a Bloom Filter library that is fully compatible with DSCO's [Go](https://github.com/DCSO/flor) and [python](https://github.com/DCSO/flor) implementations.
+Fleur implements a Bloom Filter library that is fully compatible with DCSO's [Go](https://github.com/DCSO/flor) and [python](https://github.com/DCSO/flor) implementations.
 
 # Requirements
 - gcc version supporting C11
