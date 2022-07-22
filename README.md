@@ -113,3 +113,9 @@ Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup
 	Page size (bytes): 4096
 	Exit status: 0
 ```
+
+# Acknowledgment
+
+![](./img/cef.png)
+
+The project has been co-funded by CEF-TC-2020-2 - 2020-EU-IA-0260 - JTAN - Joint Threat Analysis Network.
