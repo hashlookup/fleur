@@ -82,9 +82,14 @@ int main(int argc, char* argv[])
                 continue;
             case 'h':
                 usage();
+                free(bloom_path);
+                free(mode_str);
                 return EXIT_SUCCESS;
             default: /* '?' */
                 fprintf(stderr, "[ERROR] Invalid command line was specified\n");
+                free(bloom_path);
+                free(mode_str);
+                return EXIT_FAILURE;
         }
     }
 
@@ -127,6 +132,7 @@ int main(int argc, char* argv[])
             free(buffer);
             free(bf->v);
             free(bloom_path);
+            free(mode_str);
             return EXIT_SUCCESS;
         case insert:
             while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
@@ -142,11 +148,13 @@ int main(int argc, char* argv[])
             fclose(f);
             free(bf->v);
             free(bloom_path);
+            free(mode_str);
             return EXIT_SUCCESS;
         case show:
             print_filter(bf);
             free(bf->v);
             free(bloom_path);
+            free(mode_str);
             return EXIT_SUCCESS;
         case create:
             bf = Initialize(n, p);
@@ -159,6 +167,7 @@ int main(int argc, char* argv[])
             fclose(f);
             free(bf->v);
             free(bloom_path);
+            free(mode_str);
             return EXIT_SUCCESS;
         case getdata:
             printf("%s", bf->Data);
@@ -189,6 +198,7 @@ int main(int argc, char* argv[])
                     free(bf->Data);
                 }
             free(bloom_path);
+            free(mode_str);
             return EXIT_SUCCESS;
         case BADKEY:
             usage();

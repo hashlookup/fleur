@@ -89,23 +89,23 @@ Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup
 ```
 /usr/bin/time -v  bash -c "cat test.txt | ./fleurcli -c check ../hashlookup-full.bloom"
 ...
-    Command being timed: "bash -c cat test.txt | ./fleurcli -c check ../hashlookup-full.bloom"
-	User time (seconds): 0.00
-	System time (seconds): 0.34
-	Percent of CPU this job got: 97%
+	Command being timed: "bash -c cat test.txt | ./fleurcli -c check ../hashlookup-full.bloom"
+	User time (seconds): 0.01
+	System time (seconds): 0.33
+	Percent of CPU this job got: 98%
 	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.35
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 830580
+	Maximum resident set size (kbytes): 830524
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 207737
-	Voluntary context switches: 16
-	Involuntary context switches: 65
+	Major (requiring I/O) page faults: 1
+	Minor (reclaiming a frame) page faults: 207736
+	Voluntary context switches: 15
+	Involuntary context switches: 30
 	Swaps: 0
-	File system inputs: 0
+	File system inputs: 8
 	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0
