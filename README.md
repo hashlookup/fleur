@@ -55,6 +55,34 @@ COMMANDS:
      get-data       Prints the data associated with the Bloom filter.
      show           Shows various details about a given Bloom filter.
 ```
+Example interactions:
+```
+$./fleurcli -c create -p 0.0001 -n 100000 mytest.bloom
+$bloom show mytest.bloom
+File:				/home/jlouis/Git/fleur/fleurcli/mytest.bloom
+Capacity:			100000
+Elements present:	0
+FP probability:		1.00e-04
+Bits:				1917011
+Hash functions:		14
+$echo toto | ./fleurcli -c insert mytest.bloom 
+$echo titi | ./fleurcli -c insert mytest.bloom 
+$echo babar | ./fleurcli -c insert mytest.bloom
+$echo tutu | ./fleurcli -c check mytest.bloom
+$echo titi | ./fleurcli -c check mytest.bloom
+titi
+$echo titi | bloom check mytest.bloom 
+titi
+$./fleurcli -c show mytest.bloom 
+Filter details:
+ n: 100000 
+ p: 0.000100
+ k: 14 
+ m: 1917011 
+ N: 3 
+ M: 29954
+ Data: (null).%
+```
 
 # Performances
 Querying on 2438 sha1 file hashes against ~800MB [hashlookup](https://hashlookup.circl.lu/) filter, finding for both implementations 2176 known files:
