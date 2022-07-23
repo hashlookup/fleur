@@ -7,6 +7,9 @@ Fleur implements a Bloom Filter library that is fully compatible with DCSO's [Go
 - [ninja](https://ninja-build.org/)
 
 Fleur has only been tested under Ubuntu 20.04
+```
+sudo apt-get install cmake ninja-build gcc
+```
 
 # Compilation
 ```

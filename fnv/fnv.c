@@ -3,7 +3,6 @@
 #include "fnv.h"
 
 uint64_t fnv1(char *buf, size_t buf_size) {
-   uint8_t b;
    uint64_t h = FNV_OFFSET;
    for (size_t i = 0; i < buf_size; i++) {
       h *= FNV_PRIME;
