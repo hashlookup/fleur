@@ -12,7 +12,7 @@ typedef struct header {
     uint64_t k;
 	//number of bits
     uint64_t m;
-	//number of 64-bit integers (generated automatically)
+	//number of elements
     uint64_t N;
 } header;
 
@@ -34,12 +34,15 @@ typedef struct BloomFilter {
 	// arbitrary data that we can attach to the filter - dynamic
 	unsigned char *Data;
 
+    // has the bloom filter been modified?
+    int modified;
+
 } BloomFilter;
 
 static const uint64_t m = 18446744073709551557LLU;
 static const uint64_t g = 18446744073709550147LLU;
 
-void Add(BloomFilter * bf, char *buf, size_t buf_size);
+int Add(BloomFilter * bf, char *buf, size_t buf_size);
 void SetData(BloomFilter * bf, char* buf, size_t buf_size );
 int Check(BloomFilter * bf, char *buf, size_t buf_size);
 struct BloomFilter * Initialize(uint64_t n, double p);

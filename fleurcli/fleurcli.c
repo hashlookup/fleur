@@ -75,10 +75,16 @@ int main(int argc, char* argv[])
                 }
                 break;
             case 'p':
-                sscanf(optarg, "%lf", &p);
+                if(sscanf(optarg, "%lf", &p) != 1){
+                    fprintf(stderr, "[ERROR] Invalid command line was specified\n");
+                    return EXIT_FAILURE;
+                }
                 continue;
             case 'n':
-                sscanf(optarg, "%ld", &n);
+                if(sscanf(optarg, "%lu", &n) != 1){
+                    fprintf(stderr, "[ERROR] Invalid command line was specified\n");
+                    return EXIT_FAILURE;
+                }
                 continue;
             case 'h':
                 usage();
@@ -121,6 +127,8 @@ int main(int argc, char* argv[])
     // variable for data manipulation
     size_t totalnread; 
     unsigned char* totalread;
+    // res holding insertin result
+    int res = 1;
 
     switch (keyfromstring(mode_str)) {
         case check: 
@@ -135,8 +143,8 @@ int main(int argc, char* argv[])
             free(mode_str);
             return EXIT_SUCCESS;
         case insert:
-            while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
-                Add(bf, buffer, nread-1);
+            while (((nread = getline(&buffer, &bufsize, stdin)) != -1) && (res != -1)) {
+                res = Add(bf, buffer, nread-1);
             }
             // Save to bloom filter file
             f = fopen(bloom_path, "wb");

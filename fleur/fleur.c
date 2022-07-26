@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <fnv.h>
-#include <myutils.h>
 #include <string.h>
 #include "fleur.h"
 
@@ -50,25 +49,30 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
     long size = ftell(f);
     fseek(f, 48, SEEK_SET);
 
-    bf.datasize = size - ceil((bf.M*64)/8) - 48;
+    if (bf.M <= (size - 48)){
 
-    // Load bitarray
-    bf.v = calloc(bf.M, sizeof(uint64_t));
-    elements_read = fread(bf.v, sizeof(uint64_t), bf.M, f);
-    if(elements_read == 0){
-        perror("Cannot load bitarray.");
-    }
-
-    // Load remaining data
-    if (bf.datasize > 0) {
-        // keep one for adding the nullbyte
-        bf.Data = calloc(bf.datasize + 1, sizeof(unsigned char));
-        elements_read = fread(bf.Data, sizeof(char), bf.datasize, f);
+        bf.datasize = size - ceil((bf.M*64)/8) - 48;
+        
+        // Load bitarray
+        bf.v = calloc(bf.M, sizeof(uint64_t));
+        elements_read = fread(bf.v, sizeof(uint64_t), bf.M, f);
         if(elements_read == 0){
-            perror("Cannot load bloom filter metadata.");
+            perror("Cannot load bitarray.");
         }
-        bf.Data[bf.datasize] = '\0';
+
+        // Load remaining data
+        if (bf.datasize > 0) {
+            // keep one for adding the nullbyte
+            bf.Data = calloc(bf.datasize + 1, sizeof(unsigned char));
+            elements_read = fread(bf.Data, sizeof(char), bf.datasize, f);
+            if(elements_read == 0){
+                perror("Cannot load bloom filter metadata.");
+            }
+            bf.Data[bf.datasize] = '\0';
+        }
     }
+
+    bf.modified = 0;
     
     return &bf;
 }
@@ -80,8 +84,8 @@ void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size,  uint64_t **finge
     uint64_t h = fnv1(buf, buf_size);
     uint64_t hn = h % m;
     for (uint64_t i = 0; i < bf->h->k; i++){
-		hn = (hn * g) % m;
-		tmp[i] = (uint64_t)hn % bf->h->m;
+        hn = (hn * g) % m;
+        tmp[i] = (uint64_t)hn % bf->h->m;
     }
 
     free(*fingerprint);
@@ -89,24 +93,35 @@ void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size,  uint64_t **finge
 }
 
 // Add adds a byte array element to the Bloom filter.
-void Add(BloomFilter * bf, char *buf, size_t buf_size) {
-    uint64_t k, l;
-	int newValue = 0; 
-    uint64_t* fp = calloc(bf->h->k, sizeof(uint64_t));
-	Fingerprint(bf, buf, buf_size, &fp);
-	for (uint64_t i = 0; i < bf->h->k; i++) {
-        k = fp[i] / 64;
-        l = fp[i] % 64;
-        uint64_t v = (uint64_t)1 << l;
-		if ((bf->v[k] & v) == 0) {
-			newValue = 1;
-		}
-        bf->v[k] |= v;
-	}
-	if (newValue == 1) {
-		bf->h->N++;
-	}
-    free(fp);
+// return 0 when the value is likely already present in the filter
+// and -1 when the filter is full 
+int Add(BloomFilter * bf, char *buf, size_t buf_size) {
+    if ((bf->h->N+1) <= bf->h->n){
+        uint64_t k, l;
+        int newValue = 0; 
+        uint64_t* fp = calloc(bf->h->k, sizeof(uint64_t));
+        Fingerprint(bf, buf, buf_size, &fp);
+        for (uint64_t i = 0; i < bf->h->k; i++) {
+            k = fp[i] / 64;
+            l = fp[i] % 64;
+            uint64_t v = (uint64_t)1 << l;
+            if ((bf->v[k] & v) == 0) {
+                newValue = 1;
+            }
+            bf->v[k] |= v;
+        }
+        if (newValue == 1) {
+            bf->h->N++;
+            bf->modified = 1;
+            free(fp);
+            return 1;
+        }else{
+            free(fp);
+            return 0;
+        }
+    }else{
+        return -1;
+    }
 }
 
 // Check returns 1 if the given value may be in the Bloom filter, 0 if it
@@ -114,7 +129,7 @@ void Add(BloomFilter * bf, char *buf, size_t buf_size) {
 int Check(BloomFilter * bf, char *buf, size_t buf_size) {
     uint64_t k, l;
     uint64_t* fp = calloc(bf->h->k, sizeof(uint64_t));
-	Fingerprint(bf, buf, buf_size, &fp);
+    Fingerprint(bf, buf, buf_size, &fp);
     for (uint64_t i = 0; i < bf->h->k; i++){
         k = fp[i] / 64;
         l = fp[i] % 64;
@@ -125,7 +140,7 @@ int Check(BloomFilter * bf, char *buf, size_t buf_size) {
         }
     }
     free(fp);
-	return 1;
+    return 1;
 }
 
 // Initialize returns a new, empty Bloom filter with the given capacity (n)
@@ -135,15 +150,16 @@ struct BloomFilter * Initialize(uint64_t n, double p){
     static struct BloomFilter bf;
     static header h;
 
-	h.m = fabs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
-	h.n = n;
-	h.p = p;
-	bf.M = ceil(h.m / 64.0);
-	h.k = ceil(log(2) * h.m / h.n );
+    h.m = fabs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
+    h.n = n;
+    h.p = p;
+    bf.M = ceil(h.m / 64.0);
+    h.k = ceil(log(2) * h.m / h.n );
 
     bf.v = calloc(bf.M, sizeof(uint64_t));
     bf.h = &h;
-	return &bf;
+    bf.modified = 0;
+    return &bf;
 }
 
 void print_header(header h){
