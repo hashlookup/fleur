@@ -35,6 +35,8 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
     size_t elements_read = fread(&h, sizeof(h), 1, f);
     if(elements_read == 0){
         perror("Cannot read  binary file.");
+        fclose(f);
+        exit(EXIT_FAILURE);
     }
     h.version = (uint64_t)1;
     bf.h = &h;
@@ -45,6 +47,8 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
     int err = fseek(f, 0, SEEK_END);
     if(err!=0){
         perror("Cannot seek in binary file.");
+        fclose(f);
+        exit(EXIT_FAILURE);
     }
     long size = ftell(f);
     fseek(f, 48, SEEK_SET);
@@ -58,6 +62,8 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
         elements_read = fread(bf.v, sizeof(uint64_t), bf.M, f);
         if(elements_read == 0){
             perror("Cannot load bitarray.");
+            fclose(f);
+            exit(EXIT_FAILURE);
         }
 
         // Load remaining data
@@ -67,6 +73,8 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
             elements_read = fread(bf.Data, sizeof(char), bf.datasize, f);
             if(elements_read == 0){
                 perror("Cannot load bloom filter metadata.");
+                fclose(f);
+                exit(EXIT_FAILURE);
             }
             bf.Data[bf.datasize] = '\0';
         }
