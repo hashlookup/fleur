@@ -36,6 +36,8 @@ typedef struct BloomFilter {
 
     // has the bloom filter been modified?
     int modified;
+    // error on instanciation
+    int error;
 
 } BloomFilter;
 
@@ -50,4 +52,5 @@ struct BloomFilter * BloomFilterFromFile(FILE* f);
 void BloomFilterToFile(BloomFilter * bf, FILE* of);
 void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
 void print_header(header h);
+int check_header(header h);
 void print_filter(BloomFilter * bf);

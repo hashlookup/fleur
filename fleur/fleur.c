@@ -19,7 +19,7 @@ void BloomFilterToFile(BloomFilter * bf, FILE* of){
     fwrite(bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
 }
 
-// SetData sets the data field of the bloom fileter
+// SetData sets the data field of the bloom filter
 void SetData(BloomFilter * bf, char* buf, size_t buf_size ){
     free(bf->Data);
     bf->Data = calloc(buf_size, sizeof(unsigned char));
@@ -34,21 +34,29 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
     static header h;
     size_t elements_read = fread(&h, sizeof(h), 1, f);
     if(elements_read == 0){
-        perror("Cannot read  binary file.");
+        fprintf(stderr, "Error reading filter file.\n");
+        bf.error = 1;
         fclose(f);
-        exit(EXIT_FAILURE);
+        return &bf;
     }
-    h.version = (uint64_t)1;
+
     bf.h = &h;
+    if (check_header(h) != 1){
+        fprintf(stderr, "Incoherent header.\n");
+        bf.error = 1;
+        fclose(f);
+        return &bf;
+    }
 
     bf.M = ceil(bf.h->m / 64.0);
 
     // Get data size
     int err = fseek(f, 0, SEEK_END);
     if(err!=0){
-        perror("Cannot seek in binary file.");
+        fprintf(stderr, "Cannot seek in binary file.\n");
+        bf.error = 1;
         fclose(f);
-        exit(EXIT_FAILURE);
+        return &bf;
     }
     long size = ftell(f);
     fseek(f, 48, SEEK_SET);
@@ -61,9 +69,10 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
         bf.v = calloc(bf.M, sizeof(uint64_t));
         elements_read = fread(bf.v, sizeof(uint64_t), bf.M, f);
         if(elements_read == 0){
-            perror("Cannot load bitarray.");
+            fprintf(stderr, "Cannot load bitarray.\n");
+            bf.error = 1;
             fclose(f);
-            exit(EXIT_FAILURE);
+            return &bf;
         }
 
         // Load remaining data
@@ -72,15 +81,16 @@ struct BloomFilter * BloomFilterFromFile(FILE* f){
             bf.Data = calloc(bf.datasize + 1, sizeof(unsigned char));
             elements_read = fread(bf.Data, sizeof(char), bf.datasize, f);
             if(elements_read == 0){
-                perror("Cannot load bloom filter metadata.");
+                fprintf(stderr, "Cannot load bloom filter metadata.\n");
+                bf.error = 1;
                 fclose(f);
-                exit(EXIT_FAILURE);
             }
             bf.Data[bf.datasize] = '\0';
         }
     }
 
     bf.modified = 0;
+    bf.error = 0;
     
     return &bf;
 }
@@ -171,13 +181,49 @@ struct BloomFilter * Initialize(uint64_t n, double p){
 }
 
 void print_header(header h){
-     printf("Header details:\n version: %lu\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n",
-    h.version,
-    h.n,
-    h.p,
-    h.k,
-    h.m,
-    h.N);
+    printf("Header details:\n version: %lu\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n",
+        h.version,
+        h.n,
+        h.p,
+        h.k,
+        h.m,
+        h.N);
+}
+
+int check_header(header h){
+    if (h.version != 1){
+        fprintf(stderr, "Current filter version not supported.\n");
+        return 0;
+    }
+    // 0111111111111111111111111111111111111111111111111111111111111111b
+    uint64_t maxint = 9223372036854775807;
+    if (h.k >= maxint){
+        fprintf(stderr, "value of k (number of hash functions) is too high.\n");
+        return 0;
+    }
+    if (h.p <= __DBL_EPSILON__){
+        fprintf(stderr, "p is too small.\n");
+        return 0;
+    }
+    if (h.p > 1){
+        fprintf(stderr, "p is more than one.\n");
+        return 0;
+    }
+    if (h.N > h.n){
+        fprintf(stderr, "incoherent filter.\n");
+        return 0;
+    }
+    uint64_t tmp_m = fabs(ceil((double)(h.n) * log(h.p) / pow(log(2.0), 2.0)));
+    if (tmp_m != h.m){
+        fprintf(stderr, "incoherent filter.\n");
+        return 0;
+    }
+    uint64_t tmp_k = ceil(log(2) * h.m / h.n );
+    if (tmp_k != h.k){
+        fprintf(stderr, "incoherent filter values.\n");
+        return 0;
+    }
+    return 1;
 }
 
 void print_filter(BloomFilter * bf){

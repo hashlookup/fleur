@@ -116,6 +116,9 @@ int main(int argc, char* argv[])
         }
 
         bf = BloomFilterFromFile(in);
+        if (bf->error != 0){
+            return EXIT_FAILURE;
+        }
         fclose(in);
     }
     // variables for reading from stdin
