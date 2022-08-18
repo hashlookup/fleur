@@ -5,7 +5,7 @@
 #include <string.h>
 #include "fleur.h"
 
-// BloomFilterToFile serializes a bloom filter to a file
+// fleur_bloom_filter_to_file serializes a bloom filter to a file
 // it receives a file descriptor
 void fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of){
     bf->version = (uint64_t) 1;
@@ -19,7 +19,7 @@ void fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of){
     fwrite(bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
 }
 
-// SetData sets the data field of the bloom filter
+// fleur_set_data sets the data field of the bloom filter
 void fleur_set_data(BloomFilter * bf, char* buf, size_t buf_size ){
     free(bf->Data);
     bf->Data = calloc(buf_size, sizeof(unsigned char));
@@ -27,7 +27,7 @@ void fleur_set_data(BloomFilter * bf, char* buf, size_t buf_size ){
     memcpy(bf->Data, buf, buf_size);
 }
 
-// fleur_BloomFilterFromFile returns a pointer to a BloomFilter from a 
+// fleur_bloom_filter_from_file returns a pointer to a BloomFilter from a 
 // file descriptor.
 struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
     BloomFilter bf;
@@ -98,7 +98,7 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
     return bf;
 }
 
-// Fingerprint returns the fingerprint of a given value, as an array of index
+// fleur_fingerprint returns the fingerprint of a given value, as an array of index
 // values.
 void fleur_fingerprint(BloomFilter * bf, char *buf, size_t buf_size,  uint64_t **fingerprint) {
     uint64_t* tmp = calloc(bf->h.k, sizeof(uint64_t));
@@ -113,7 +113,7 @@ void fleur_fingerprint(BloomFilter * bf, char *buf, size_t buf_size,  uint64_t *
     *fingerprint = tmp;
 }
 
-// Add adds a byte array element to the Bloom filter.
+// fleur_add adds a byte array element to the Bloom filter.
 // return 0 when the value is likely already present in the filter
 // and -1 when the filter is full 
 int fleur_add(BloomFilter * bf, char *buf, size_t buf_size) {
@@ -145,7 +145,7 @@ int fleur_add(BloomFilter * bf, char *buf, size_t buf_size) {
     }
 }
 
-// Check returns 1 if the given value may be in the Bloom filter, 0 if it
+// fleur_check returns 1 if the given value may be in the Bloom filter, 0 if it
 // is definitely not in it.
 int fleur_check(BloomFilter * bf, char *buf, size_t buf_size) {
     uint64_t k, l;
@@ -164,7 +164,7 @@ int fleur_check(BloomFilter * bf, char *buf, size_t buf_size) {
     return 1;
 }
 
-// Initialize creates a an empty Bloom filter with the given capacity (n)
+// fleur_initialize creates a an empty Bloom filter with the given capacity (n)
 // and FP probability (p).
 struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf){
     BloomFilter bf;
@@ -186,6 +186,7 @@ struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf){
     return bf;
 }
 
+// fleur_print_header prints a BloomFilter's header
 void fleur_print_header(header * h){
     printf("Header details:\n version: %lu\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n",
         h->version,
@@ -196,6 +197,7 @@ void fleur_print_header(header * h){
         h->N);
 }
 
+// fleur_check_printer check a BloomFilter's header for inconsistencies
 int fleur_check_header(header * h){
     if (h->version != 1){
         fprintf(stderr, "Current filter version not supported.\n");
@@ -232,6 +234,7 @@ int fleur_check_header(header * h){
     return 1;
 }
 
+// fleur_printer_filter prints a BloomFilter's details
 void fleur_print_filter(BloomFilter * bf){
     printf("Filter details:\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n M: %lu\n Data: %s.",
     bf->h.n,
