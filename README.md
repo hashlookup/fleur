@@ -28,15 +28,18 @@ Each suite test's executable are then located under `./test/suite_n`.
 
 # LibFleur usage
 ```
-void Add(BloomFilter * bf, char *buf, size_t buf_size);
-void SetData(BloomFilter * bf, char* buf, size_t buf_size );
-int Check(BloomFilter * bf, char *buf, size_t buf_size);
-struct BloomFilter * Initialize(uint64_t n, double p);
-struct BloomFilter * BloomFilterFromFile(FILE* f);
-void BloomFilterToFile(BloomFilter * bf, FILE* of);
-void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
-void print_header(header h);
-void print_filter(BloomFilter * bf);
+struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf);
+struct BloomFilter fleur_bloom_filter_from_file(FILE* f);
+
+int fleur_add(BloomFilter * bf, char *buf, size_t buf_size);
+int fleur_check(BloomFilter * bf, char *buf, size_t buf_size);
+void fleur_set_data(BloomFilter * bf, char* buf, size_t buf_size );
+void fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of);
+void fleur_fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
+
+void fleur_print_header(header * h);
+void fleur_print_filter(BloomFilter * bf);
+int fleur_check_header(header * h);
 ```
 
 # Fleur command line tool usage
