@@ -124,9 +124,9 @@ void test_fingerprint(void){
 }
 
 void test_initialize(void){
-    struct BloomFilter bf = fleur_initialize(10000, 0.001, "");
-    struct BloomFilter bf1 = fleur_initialize(100, 0.00001, "toto");
-    struct BloomFilter bf2 = fleur_initialize(9000, 0.01, "titi");
+    BloomFilter bf = fleur_initialize(10000, 0.001, "");
+    BloomFilter bf1 = fleur_initialize(100, 0.00001, "toto");
+    BloomFilter bf2 = fleur_initialize(9000, 0.01, "titi");
 
     char str[80];
 	if (bf.h.k != 10) {

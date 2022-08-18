@@ -7,7 +7,7 @@
 #include <fleur.h>
 #include <myutils.h>
 
-BloomFilter * bf;
+BloomFilter bf;
 
 #define BADKEY (int)(-1)
 #define NKEYS (sizeof(lookuptable)/sizeof(t_symstruct))
@@ -115,8 +115,8 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
         }
 
-        bf = BloomFilterFromFile(in);
-        if (bf->error != 0){
+        bf = fleur_bloom_filter_from_file(in);
+        if (bf.error != 0){
             return EXIT_FAILURE;
         }
         fclose(in);
@@ -136,18 +136,18 @@ int main(int argc, char* argv[])
     switch (keyfromstring(mode_str)) {
         case check: 
             while ((nread = getline(&buffer, &bufsize, stdin)) != -1) {
-                if (Check(bf, buffer, nread-1) == 1){
+                if (fleur_check(&bf, buffer, nread-1) == 1){
                     printf("%s", buffer);
                 }
             }
             free(buffer);
-            free(bf->v);
+            free(bf.v);
             free(bloom_path);
             free(mode_str);
             return EXIT_SUCCESS;
         case insert:
             while (((nread = getline(&buffer, &bufsize, stdin)) != -1) && (res != -1)) {
-                res = Add(bf, buffer, nread-1);
+                res = fleur_add(&bf, buffer, nread-1);
             }
             // Save to bloom filter file
             f = fopen(bloom_path, "wb");
@@ -155,33 +155,33 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "[ERROR] %s", strerror(errno)); 
                 return EXIT_FAILURE;
             }
-            BloomFilterToFile(bf, f);
+            fleur_bloom_filter_to_file(&bf, f);
             fclose(f);
-            free(bf->v);
+            free(bf.v);
             free(bloom_path);
             free(mode_str);
             return EXIT_SUCCESS;
         case show:
-            print_filter(bf);
-            free(bf->v);
+            fleur_print_filter(&bf);
+            free(bf.v);
             free(bloom_path);
             free(mode_str);
             return EXIT_SUCCESS;
         case create:
-            bf = Initialize(n, p);
+            bf = fleur_initialize(n, p, "");
             f = fopen(bloom_path, "wb+");
             if (f == NULL) {
                 fprintf(stderr, "[ERROR] %s", strerror(errno)); 
                 return EXIT_FAILURE;
             }
-            BloomFilterToFile(bf, f);
+            fleur_bloom_filter_to_file(&bf, f);
             fclose(f);
-            free(bf->v);
+            free(bf.v);
             free(bloom_path);
             free(mode_str);
             return EXIT_SUCCESS;
         case getdata:
-            printf("%s", bf->Data);
+            printf("%s", bf.Data);
             return EXIT_SUCCESS;
         case setdata:
                 totalnread = 0;
@@ -196,17 +196,17 @@ int main(int argc, char* argv[])
                     totalnread += (nread - 1);
                 }
                 if (totalnread != 0){
-                    SetData(bf, totalread, totalnread);
+                    fleur_set_data(&bf, totalread, totalnread);
                     f = fopen(bloom_path, "wb");
                     if (f == NULL) {
                         fprintf(stderr, "[ERROR] %s", strerror(errno)); 
                         return EXIT_FAILURE;
                     }
-                    BloomFilterToFile(bf, f);
+                    fleur_bloom_filter_to_file(&bf, f);
                     fclose(f);
                     free(totalread);
-                    free(bf->v);
-                    free(bf->Data);
+                    free(bf.v);
+                    free(bf.Data);
                 }
             free(bloom_path);
             free(mode_str);
