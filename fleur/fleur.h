@@ -23,7 +23,7 @@ typedef struct BloomFilter {
     uint64_t datasize;
 
     // bloom filter file header
-    header *h;
+    header h;
 
     //number of 64-bit integers (generated automatically)
     uint64_t M;
@@ -44,13 +44,15 @@ typedef struct BloomFilter {
 static const uint64_t m = 18446744073709551557LLU;
 static const uint64_t g = 18446744073709550147LLU;
 
-int Add(BloomFilter * bf, char *buf, size_t buf_size);
-void SetData(BloomFilter * bf, char* buf, size_t buf_size );
-int Check(BloomFilter * bf, char *buf, size_t buf_size);
-struct BloomFilter * Initialize(uint64_t n, double p);
-struct BloomFilter * BloomFilterFromFile(FILE* f);
-void BloomFilterToFile(BloomFilter * bf, FILE* of);
-void Fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
-void print_header(header h);
-int check_header(header h);
-void print_filter(BloomFilter * bf);
+struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf);
+struct BloomFilter fleur_bloom_filter_from_file(FILE* f);
+
+int fleur_add(BloomFilter * bf, char *buf, size_t buf_size);
+int fleur_check(BloomFilter * bf, char *buf, size_t buf_size);
+void fleur_set_data(BloomFilter * bf, char* buf, size_t buf_size );
+void fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of);
+void fleur_fingerprint(BloomFilter * bf, char *buf, size_t buf_size, uint64_t **fingerprint);
+
+void fleur_print_header(header * h);
+void fleur_print_filter(BloomFilter * bf);
+int fleur_check_header(header * h);
