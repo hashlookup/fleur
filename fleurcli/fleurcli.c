@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     while ((opt = getopt(argc, argv, "c:p:n:h")) != -1) {
         switch (opt) {
             case 'c':
-                strncpy(mode_str, optarg, 128);
+                snprintf(mode_str, 128, "%s", optarg);
                 if (strcmp(optarg, "create\0") == 0 ){
                     cancelread =1;
                 }
@@ -99,8 +99,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    for(; optind < argc; optind++){     
-        strncpy(bloom_path , argv[optind], 128);
+    for(optind = 0; optind < argc; optind++){     
+        snprintf(bloom_path, 128, "%s", argv[optind]);
     }
       
     if (!bloom_path[0]){
