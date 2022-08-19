@@ -172,7 +172,7 @@ struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf){
     uint64_t m = fabs(ceil((double)(n) * log(p) / pow(log(2.0), 2.0)));
     uint64_t k = ceil(log(2) * m / n );
 
-	bf.Data = buf; 
+	bf.Data = (unsigned char*)buf; 
 
     bf.M = ceil(m / 64.0);
 
