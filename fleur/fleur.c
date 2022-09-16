@@ -164,6 +164,46 @@ int fleur_check(BloomFilter * bf, char *buf, size_t buf_size) {
     return 1;
 }
 
+// fleur_join adds item of filter src in filter dst
+// filter, must have the same characteristics. 
+// dst's number of element will be incremented by src's
+// number of elemets. Hence is dst and src are not disjoint,
+// dst number of element won't be accurate anymore and 
+// constitute an upper bound. return 0 on error, 1 on success.
+int fleur_join(BloomFilter* src, BloomFilter* dst){
+    uint64_t i;
+    if (src->h.n != dst->h.n) {
+        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        return 0;
+    }
+    if (src->h.p != dst->h.p) {
+        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        return 0;
+    }
+    if (src->h.k != dst->h.k) {
+        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        return 0;
+    }
+    if (src->h.m != dst->h.m) {
+        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        return 0;
+    }
+    if (src->M != dst->M) {
+        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        return 0;
+    }
+    if ((dst->h.N + src->h.N) > dst->h.N) {
+        fprintf(stderr, "Destination Filter is full.\n");
+        return 0;
+	}
+    for (uint64_t t; i < dst->M; i++){
+        dst->v[i] |= src->v[i];
+    }
+	dst->h.N += src->h.N;
+
+	return 1;
+}
+
 // fleur_initialize creates a an empty Bloom filter with the given capacity (n)
 // and FP probability (p).
 struct BloomFilter fleur_initialize(uint64_t n, double p, char *buf){

@@ -178,6 +178,11 @@ void test_checking(void) {
     free(test);
 }
 
+// This tests joining two filters into one
+void test_joining(void) {
+
+}
+
 void setUp() {
     inheader = fopen("header.bin", "rb");
     if (inheader==NULL){
@@ -216,6 +221,7 @@ int main(void)
     RUN_TEST(test_fingerprint);
     RUN_TEST(test_checking);
     RUN_TEST(test_writing);
+    RUN_TEST(test_joining);
 
     return UNITY_END();
 }
