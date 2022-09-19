@@ -7,19 +7,20 @@
 #include <fleur.h>
 #include <myutils.h>
 
-BloomFilter bf;
+BloomFilter bf, dst;
 
 #define BADKEY (int)(-1)
 #define NKEYS (sizeof(lookuptable)/sizeof(t_symstruct))
 typedef struct { char *key; int val; } t_symstruct;
-enum modes{check, insert, show, create, setdata, getdata};
+enum modes{check, insert, show, create, setdata, getdata, join};
 static t_symstruct lookuptable[] = {
     { "check", check },
     { "insert", insert },
     { "show", show },
     { "create", create },
     { "set-data", setdata },
-    { "get-data", getdata }
+    { "get-data", getdata },
+    { "join", join}
 };
 
 int keyfromstring(char *key)
@@ -61,16 +62,18 @@ int main(int argc, char* argv[])
     double p = 0.01;
     uint64_t n = 10000;
     char* bloom_path;
+    char* bloom_path_dst;
     char* mode_str;
     
     bloom_path = calloc(128,1);
+    bloom_path_dst = calloc(128,1);
     mode_str = calloc(128,1);
 
     while ((opt = getopt(argc, argv, "c:p:n:h")) != -1) {
         switch (opt) {
             case 'c':
                 snprintf(mode_str, 128, "%s", optarg);
-                if (strcmp(optarg, "create\0") == 0 ){
+                if ((strcmp(optarg, "create\0") == 0) || (strcmp(optarg, "join\0") == 0)){
                     cancelread =1;
                 }
                 break;
@@ -89,19 +92,21 @@ int main(int argc, char* argv[])
             case 'h':
                 usage();
                 free(bloom_path);
+                free(bloom_path_dst);
                 free(mode_str);
                 return EXIT_SUCCESS;
             default: /* '?' */
                 fprintf(stderr, "[ERROR] Invalid command line was specified\n");
                 free(bloom_path);
+                free(bloom_path_dst);
                 free(mode_str);
                 return EXIT_FAILURE;
         }
     }
 
-    for(optind = 0; optind < argc; optind++){     
-        snprintf(bloom_path, 128, "%s", argv[optind]);
-    }
+
+    snprintf(bloom_path, 128, "%s", argv[argc-1]);
+    
       
     if (!bloom_path[0]){
         fprintf(stderr,"[ERROR] A path must be specified\n");
@@ -143,6 +148,7 @@ int main(int argc, char* argv[])
             free(buffer);
             free(bf.v);
             free(bloom_path);
+            free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
         case insert:
@@ -159,12 +165,14 @@ int main(int argc, char* argv[])
             fclose(f);
             free(bf.v);
             free(bloom_path);
+            free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
         case show:
             fleur_print_filter(&bf);
             free(bf.v);
             free(bloom_path);
+            free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
         case create:
@@ -178,6 +186,7 @@ int main(int argc, char* argv[])
             fclose(f);
             free(bf.v);
             free(bloom_path);
+            free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
         case getdata:
@@ -209,8 +218,62 @@ int main(int argc, char* argv[])
                     free(bf.Data);
                 }
             free(bloom_path);
+            free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
+        case join:
+            snprintf(bloom_path, 128, "%s", argv[argc-2]);
+            snprintf(bloom_path_dst, 128, "%s", argv[argc-1]);
+            
+            if (!bloom_path[0]){
+                fprintf(stderr,"[ERROR] A path must be specified\n");
+                return EXIT_FAILURE; 
+            }
+            FILE* in = fopen(bloom_path, "rb");
+            if (in == NULL) {
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                return EXIT_FAILURE;
+            }
+
+            bf = fleur_bloom_filter_from_file(in);
+            if (bf.error != 0){
+                return EXIT_FAILURE;
+            }
+            fclose(in);
+            if (!bloom_path_dst[0]){
+                fprintf(stderr,"[ERROR] A destination path must be specified\n");
+                return EXIT_FAILURE; 
+            }
+            
+            FILE* fdst = fopen(bloom_path_dst, "rb");
+            if (fdst == NULL) {
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                return EXIT_FAILURE;
+            }
+            dst = fleur_bloom_filter_from_file(fdst);
+            if (dst.error != 0){
+                printf("%d\n", dst.error);
+                return EXIT_FAILURE;
+            }
+            fclose(fdst);
+            int err;
+            err = fleur_join(&bf, &dst);
+            if(err != 1){
+                return EXIT_FAILURE;
+            }
+
+            fleur_print_filter(&dst);
+
+            fdst = fopen(bloom_path_dst, "w");
+            if (fdst == NULL) {
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+                return EXIT_FAILURE;
+            }
+
+            fleur_bloom_filter_to_file(&dst, fdst);
+            fclose(fdst);
+            return EXIT_SUCCESS;
+
         case BADKEY:
             usage();
             return EXIT_SUCCESS;
