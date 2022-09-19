@@ -88,6 +88,10 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
             }
             bf.Data[bf.datasize] = '\0';
         }
+        if (bf.datasize == 0){
+            bf.Data = calloc(1, sizeof(unsigned char));
+            bf.Data[bf.datasize] = '\0';
+        }
     }
 
     bf.modified = 0;
@@ -169,7 +173,8 @@ int fleur_check(BloomFilter * bf, char *buf, size_t buf_size) {
 // dst's number of element will be incremented by src's
 // number of elemets. Hence is dst and src are not disjoint,
 // dst number of element won't be accurate anymore and 
-// constitute an upper bound. return 0 on error, 1 on success.
+// constitute an upper bound. return -1 if the filter is full,
+// 0 on error, 1 on success.
 int fleur_join(BloomFilter* src, BloomFilter* dst){
     uint64_t i;
     if (src->h.n != dst->h.n) {
@@ -192,11 +197,11 @@ int fleur_join(BloomFilter* src, BloomFilter* dst){
         fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
-    if ((dst->h.N + src->h.N) > dst->h.N) {
+    if ((dst->h.N + src->h.N) > dst->h.n) {
         fprintf(stderr, "Destination Filter is full.\n");
-        return 0;
+        return -1;
 	}
-    for (uint64_t t; i < dst->M; i++){
+    for (uint64_t i; i < dst->M; i++){
         dst->v[i] |= src->v[i];
     }
 	dst->h.N += src->h.N;

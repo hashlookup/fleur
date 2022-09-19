@@ -11,6 +11,9 @@ FILE* hang0;
 FILE* hang1;
 FILE* hang2;
 FILE* infull;
+FILE* join1;
+FILE* join2;
+FILE* join3;
 struct header my_header;
 
 typedef struct tester {
@@ -87,14 +90,12 @@ void test_reading_full(void)
     TEST_ASSERT_EQUAL_UINT64(450, bf.M);
     // TEST_ASSERT_EQUAL_STRING("toto\n", my_bloom->Data);
     fleur_print_filter(&bf);
-    free(bf.v);
-    free(bf.Data);
+    // free(bf.v);
+    // free(bf.Data);
 
     // hang2 p above 1
     BloomFilter bf1 = fleur_bloom_filter_from_file(hang2);
     TEST_ASSERT_EQUAL_INT (1, bf1.error);
-    free(bf1.v);
-    free(bf1.Data);
 }
 
 void test_writing(void){
@@ -180,7 +181,19 @@ void test_checking(void) {
 
 // This tests joining two filters into one
 void test_joining(void) {
-
+    BloomFilter j1 = fleur_bloom_filter_from_file(join1);
+    BloomFilter j0 = fleur_bloom_filter_from_file(infull);
+    BloomFilter j2 = fleur_bloom_filter_from_file(join2);
+    BloomFilter j3 = fleur_bloom_filter_from_file(join3);
+    TEST_ASSERT_EQUAL_INT (-1, fleur_join(&j2, &j1));
+    TEST_ASSERT_EQUAL_INT (0, fleur_join(&j0, &j1));
+    TEST_ASSERT_EQUAL_INT (1, fleur_join(&j3, &j1));
+    free(j0.v);
+    free(j0.Data);
+    free(j1.v);
+    free(j1.Data);
+    free(j2.v);
+    free(j2.Data);
 }
 
 void setUp() {
@@ -189,19 +202,31 @@ void setUp() {
         TEST_FAIL_MESSAGE(strerror(errno));
     }
     hang0 = fopen("hang0.bin", "rb");
-    if (inheader==NULL){
+    if (hang0==NULL){
         TEST_FAIL_MESSAGE(strerror(errno));
     }
     hang1 = fopen("hang1.bin", "rb");
-    if (inheader==NULL){
+    if (hang1==NULL){
         TEST_FAIL_MESSAGE(strerror(errno));
     }
     hang2 = fopen("hang2.bin", "rb");
-    if (inheader==NULL){
+    if (hang2==NULL){
         TEST_FAIL_MESSAGE(strerror(errno));
     }
     infull = fopen("datatest.bloom", "rb");
     if (infull==NULL){
+        TEST_FAIL_MESSAGE(strerror(errno));
+    }
+    join1 = fopen("join1.bloom", "rb");
+    if (join1==NULL){
+        TEST_FAIL_MESSAGE(strerror(errno));
+    }
+    join2 = fopen("join2.bloom", "rb");
+    if (join2==NULL){
+        TEST_FAIL_MESSAGE(strerror(errno));
+    }
+    join3 = fopen("join3.bloom", "rb");
+    if (join3==NULL){
         TEST_FAIL_MESSAGE(strerror(errno));
     }
  }
@@ -209,6 +234,13 @@ void setUp() {
 void tearDown() {
     fclose(inheader);
     fclose(infull);
+    fclose(hang0);
+    fclose(hang1);
+    // hang2 closed on error by fleur_bloom_filter_from_file
+    // fclose(hang2);
+    fclose(join1);
+    fclose(join2);
+    fclose(join3);
  }
 
 int main(void)
