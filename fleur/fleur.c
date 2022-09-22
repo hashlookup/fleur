@@ -5,18 +5,32 @@
 #include <string.h>
 #include "fleur.h"
 
+// fleur_destroy_filter frees the memory used by 
+// a bloom filter.
+void fleur_destroy_filter(BloomFilter * bf){
+    free(bf->v);
+}
+
 // fleur_bloom_filter_to_file serializes a bloom filter to a file
-// it receives a file descriptor
-void fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of){
+// it receives a file descriptor, return 1 on success, 0 on error
+int fleur_bloom_filter_to_file(BloomFilter * bf, FILE* of){
     bf->version = (uint64_t) 1;
-    fwrite(&bf->version, sizeof(uint64_t), 1, of);
-    fwrite(&bf->h.n, sizeof(uint64_t), 1, of);
-    fwrite(&bf->h.p, sizeof(double), 1, of);
-    fwrite(&bf->h.k, sizeof(uint64_t), 1, of);
-    fwrite(&bf->h.m, sizeof(uint64_t), 1, of);
-    fwrite(&bf->h.N, sizeof(uint64_t), 1, of);
-    fwrite(bf->v, bf->M * sizeof(uint64_t), 1, of);
+    uint64_t ret = 1;
+    ret = fwrite(&bf->version, sizeof(uint64_t), 1, of);
+    ret = fwrite(&bf->h.n, sizeof(uint64_t), 1, of);
+    ret = fwrite(&bf->h.p, sizeof(double), 1, of);
+    ret = fwrite(&bf->h.k, sizeof(uint64_t), 1, of);
+    ret = fwrite(&bf->h.m, sizeof(uint64_t), 1, of);
+    ret = fwrite(&bf->h.N, sizeof(uint64_t), 1, of);
+    ret = fwrite(bf->v, bf->M * sizeof(uint64_t), 1, of);
+    // Data can be empty
     fwrite(bf->Data, bf->datasize * sizeof(unsigned char), 1, of);
+    if (ret == 0) {
+        fprintf(stderr, "[ERROR] writing filter file.\n");
+        return 0;
+    }else{
+        return 1;
+    }
 }
 
 // fleur_set_data sets the data field of the bloom filter
@@ -35,16 +49,14 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
 
     size_t elements_read = fread(&h, sizeof(header), 1, f);
     if(elements_read == 0){
-        fprintf(stderr, "Error reading filter file.\n");
+        fprintf(stderr, "[ERROR] reading filter file.\n");
         bf.error = 1;
-        fclose(f);
         return bf;
     }
 
     if (fleur_check_header(&h) != 1){
-        fprintf(stderr, "Incoherent header.\n");
+        fprintf(stderr, "[ERROR] Incoherent header.\n");
         bf.error = 1;
-        fclose(f);
         return bf;
     }
 
@@ -53,9 +65,8 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
     // Get data size
     int err = fseek(f, 0, SEEK_END);
     if(err!=0){
-        fprintf(stderr, "Cannot seek in binary file.\n");
+        fprintf(stderr, "[ERROR] Cannot seek in binary file.\n");
         bf.error = 1;
-        fclose(f);
         return bf;
     }
     long size = ftell(f);
@@ -69,9 +80,8 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
         bf.v = calloc(bf.M, sizeof(uint64_t));
         elements_read = fread(bf.v, sizeof(uint64_t), bf.M, f);
         if(elements_read == 0){
-            fprintf(stderr, "Cannot load bitarray.\n");
+            fprintf(stderr, "[ERROR] Cannot load bitarray.\n");
             bf.error = 1;
-            fclose(f);
             return bf;
         }
 
@@ -81,9 +91,8 @@ struct BloomFilter fleur_bloom_filter_from_file(FILE* f){
             bf.Data = calloc(bf.datasize + 1, sizeof(unsigned char));
             elements_read = fread(bf.Data, sizeof(char), bf.datasize, f);
             if(elements_read == 0){
-                fprintf(stderr, "Cannot load bloom filter metadata.\n");
+                fprintf(stderr, "[ERROR] Cannot load bloom filter metadata.\n");
                 bf.error = 1;
-                fclose(f);
                 return bf;
             }
             bf.Data[bf.datasize] = '\0';
@@ -178,27 +187,27 @@ int fleur_check(BloomFilter * bf, char *buf, size_t buf_size) {
 int fleur_join(BloomFilter* src, BloomFilter* dst){
     uint64_t i;
     if (src->h.n != dst->h.n) {
-        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        fprintf(stderr, "[ERROR] Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
     if (src->h.p != dst->h.p) {
-        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        fprintf(stderr, "[ERROR] Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
     if (src->h.k != dst->h.k) {
-        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        fprintf(stderr, "[ERROR] Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
     if (src->h.m != dst->h.m) {
-        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        fprintf(stderr, "[ERROR] Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
     if (src->M != dst->M) {
-        fprintf(stderr, "Filters characteristics mismatch - cannot join.\n");
+        fprintf(stderr, "[ERROR] Filters characteristics mismatch - cannot join.\n");
         return 0;
     }
     if ((dst->h.N + src->h.N) > dst->h.n) {
-        fprintf(stderr, "Destination Filter is full.\n");
+        fprintf(stderr, "[ERROR] Destination Filter is full.\n");
         return -1;
 	}
     for (uint64_t i; i < dst->M; i++){
@@ -245,35 +254,35 @@ void fleur_print_header(header * h){
 // fleur_check_printer check a BloomFilter's header for inconsistencies
 int fleur_check_header(header * h){
     if (h->version != 1){
-        fprintf(stderr, "Current filter version not supported.\n");
+        fprintf(stderr, "[ERROR] Current filter version not supported.\n");
         return 0;
     }
     // 0111111111111111111111111111111111111111111111111111111111111111b
     uint64_t maxint = 9223372036854775807;
     if (h->k >= maxint){
-        fprintf(stderr, "value of k (number of hash functions) is too high.\n");
+        fprintf(stderr, "[ERROR] value of k (number of hash functions) is too high.\n");
         return 0;
     }
     if (h->p <= __DBL_EPSILON__){
-        fprintf(stderr, "p is too small.\n");
+        fprintf(stderr, "[ERROR] p is too small.\n");
         return 0;
     }
     if (h->p > 1){
-        fprintf(stderr, "p is more than one.\n");
+        fprintf(stderr, "[ERROR] p is more than one.\n");
         return 0;
     }
     if (h->N > h->n){
-        fprintf(stderr, "incoherent filter.\n");
+        fprintf(stderr, "[ERROR] incoherent filter.\n");
         return 0;
     }
     uint64_t tmp_m = fabs(ceil((double)(h->n) * log(h->p) / pow(log(2.0), 2.0)));
     if (tmp_m != h->m){
-        fprintf(stderr, "incoherent filter.\n");
+        fprintf(stderr, "[ERROR] incoherent filter.\n");
         return 0;
     }
     uint64_t tmp_k = ceil(log(2) * h->m / h->n );
     if (tmp_k != h->k){
-        fprintf(stderr, "incoherent filter values.\n");
+        fprintf(stderr, "[ERROR] incoherent filter values.\n");
         return 0;
     }
     return 1;
@@ -281,7 +290,7 @@ int fleur_check_header(header * h){
 
 // fleur_printer_filter prints a BloomFilter's details
 void fleur_print_filter(BloomFilter * bf){
-    printf("Filter details:\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n M: %lu\n Data: %s.",
+    printf("Filter details:\n n: %lu \n p: %f\n k: %lu \n m: %lu \n N: %lu \n M: %lu\n Data: %s.\n",
     bf->h.n,
     bf->h.p,
     bf->h.k,

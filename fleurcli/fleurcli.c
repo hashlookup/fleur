@@ -122,6 +122,7 @@ int main(int argc, char* argv[])
 
         bf = fleur_bloom_filter_from_file(in);
         if (bf.error != 0){
+            fclose(in);
             return EXIT_FAILURE;
         }
         fclose(in);
@@ -145,8 +146,8 @@ int main(int argc, char* argv[])
                     printf("%s", buffer);
                 }
             }
+            fleur_destroy_filter(&bf);
             free(buffer);
-            free(bf.v);
             free(bloom_path);
             free(bloom_path_dst);
             free(mode_str);
@@ -163,14 +164,14 @@ int main(int argc, char* argv[])
             }
             fleur_bloom_filter_to_file(&bf, f);
             fclose(f);
-            free(bf.v);
+            fleur_destroy_filter(&bf);
             free(bloom_path);
             free(bloom_path_dst);
             free(mode_str);
             return EXIT_SUCCESS;
         case show:
             fleur_print_filter(&bf);
-            free(bf.v);
+            fleur_destroy_filter(&bf);
             free(bloom_path);
             free(bloom_path_dst);
             free(mode_str);
@@ -182,9 +183,10 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "[ERROR] %s", strerror(errno)); 
                 return EXIT_FAILURE;
             }
+            // TODO
             fleur_bloom_filter_to_file(&bf, f);
+            fleur_destroy_filter(&bf);
             fclose(f);
-            free(bf.v);
             free(bloom_path);
             free(bloom_path_dst);
             free(mode_str);
@@ -214,8 +216,7 @@ int main(int argc, char* argv[])
                     fleur_bloom_filter_to_file(&bf, f);
                     fclose(f);
                     free(totalread);
-                    free(bf.v);
-                    free(bf.Data);
+                    fleur_destroy_filter(&bf);
                 }
             free(bloom_path);
             free(bloom_path_dst);
@@ -237,6 +238,8 @@ int main(int argc, char* argv[])
 
             bf = fleur_bloom_filter_from_file(in);
             if (bf.error != 0){
+                fclose(in);
+                fleur_destroy_filter(&bf);
                 return EXIT_FAILURE;
             }
             fclose(in);
@@ -270,7 +273,12 @@ int main(int argc, char* argv[])
                 return EXIT_FAILURE;
             }
 
+            // TODO
+            int ret = 1;
             fleur_bloom_filter_to_file(&dst, fdst);
+            if (ret != 1){
+                fprintf(stderr, "[ERROR] %s", strerror(errno)); 
+            }
             fclose(fdst);
             return EXIT_SUCCESS;
 

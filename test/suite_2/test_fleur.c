@@ -88,22 +88,26 @@ void test_reading_full(void)
     BloomFilter bf = fleur_bloom_filter_from_file(infull);
     TEST_ASSERT_EQUAL_INT(0, bf.error);
     TEST_ASSERT_EQUAL_UINT64(450, bf.M);
-    // TEST_ASSERT_EQUAL_STRING("toto\n", my_bloom->Data);
     fleur_print_filter(&bf);
-    // free(bf.v);
-    // free(bf.Data);
+    fleur_destroy_filter(&bf);
 
     // hang2 p above 1
     BloomFilter bf1 = fleur_bloom_filter_from_file(hang2);
     TEST_ASSERT_EQUAL_INT (1, bf1.error);
+    fleur_destroy_filter(&bf1);
 }
 
 void test_writing(void){
     const char* path = "./writing-test.bloom";
+    int ret = 1;
     FILE* f = fopen(path, "wb");
     BloomFilter bf;
     struct tester *test = GenerateExampleFilter(&bf, 1000, 0.001, 100);
-    fleur_bloom_filter_to_file(test->bf, f);
+    ret = fleur_bloom_filter_to_file(test->bf, f);
+    if (ret != 1) {
+		TEST_FAIL_MESSAGE("Error writing filter to file.");
+    }
+    fleur_destroy_filter(&bf);
     fclose(f);
 }
 
@@ -120,7 +124,7 @@ void test_fingerprint(void){
 			break;
 		}
 	}
-    free(bf.v);
+    fleur_destroy_filter(&bf);
     free(fp);
 }
 
@@ -151,9 +155,9 @@ void test_initialize(void){
     fleur_print_filter(&bf);
     fleur_print_filter(&bf1);
     fleur_print_filter(&bf2);
-    free(bf.v);
-    free(bf1.v);
-    free(bf2.v);
+    fleur_destroy_filter(&bf);
+    fleur_destroy_filter(&bf1);
+    fleur_destroy_filter(&bf2);
 }
 
 //This tests the checking of values against a given filter
@@ -172,10 +176,10 @@ void test_checking(void) {
     if (fleur_check(test->bf, str, strlen(str)) == 1) {
         TEST_FAIL_MESSAGE("This value is not in the filter!");
     }
-    free(test->bf->v);
     for (int i = 0; i < samples; i++){
         free(test->buf[i]);
     }
+    fleur_destroy_filter(test->bf);
     free(test);
 }
 
@@ -188,12 +192,9 @@ void test_joining(void) {
     TEST_ASSERT_EQUAL_INT (-1, fleur_join(&j2, &j1));
     TEST_ASSERT_EQUAL_INT (0, fleur_join(&j0, &j1));
     TEST_ASSERT_EQUAL_INT (1, fleur_join(&j3, &j1));
-    free(j0.v);
-    free(j0.Data);
-    free(j1.v);
-    free(j1.Data);
-    free(j2.v);
-    free(j2.Data);
+    fleur_destroy_filter(&j0);
+    fleur_destroy_filter(&j1);
+    fleur_destroy_filter(&j2);
 }
 
 void setUp() {
@@ -236,8 +237,7 @@ void tearDown() {
     fclose(infull);
     fclose(hang0);
     fclose(hang1);
-    // hang2 closed on error by fleur_bloom_filter_from_file
-    // fclose(hang2);
+    fclose(hang2);
     fclose(join1);
     fclose(join2);
     fclose(join3);
